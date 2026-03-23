@@ -1,0 +1,16 @@
+# Docs and other files at root
+*.pdf
+*.docx
+details/
+
+# Compiled Java
+*.class
+/out/
+/bin/
+/build/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.gemini/
