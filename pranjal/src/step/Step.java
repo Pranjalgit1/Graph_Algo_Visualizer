@@ -40,6 +40,29 @@ public class Step {
         return toNode;
     }
 
+    public String toDescription() {
+        switch (type) {
+            case VISIT_NODE:
+                return "Visiting node " + node;
+            case PROCESS_NODE:
+                return "Finished processing node " + node;
+            case ADD_TO_QUEUE:
+                return "Adding node " + node + " to queue";
+            case REMOVE_FROM_QUEUE:
+                return "Removing node " + node + " from queue";
+            case EXPLORE_EDGE:
+                return "Exploring edge " + fromNode + " \u2192 " + toNode;
+            case EDGE_CONSIDERED:
+                return "Considering edge " + fromNode + " \u2192 " + toNode;
+            case EDGE_SELECTED:
+                return "Selected edge " + fromNode + " \u2192 " + toNode + " for MST";
+            case EDGE_REJECTED:
+                return "Rejected edge " + fromNode + " \u2192 " + toNode;
+            default:
+                return type.toString();
+        }
+    }
+
     @Override
     public String toString() {
         switch (type) {

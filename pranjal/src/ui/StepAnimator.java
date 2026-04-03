@@ -34,6 +34,7 @@ public class StepAnimator {
     private boolean isPlaying = false;
 
     private Runnable onStepChange;
+    private Runnable onComplete;
 
     private GraphVisualData visualData;
 
@@ -44,6 +45,10 @@ public class StepAnimator {
 
     public void setOnStepChange(Runnable callback) {
         this.onStepChange = callback;
+    }
+
+    public void setOnComplete(Runnable callback) {
+        this.onComplete = callback;
     }
 
     public void setVisualData(GraphVisualData data) {
@@ -80,7 +85,12 @@ public class StepAnimator {
                     }));
         }
 
-        timeline.setOnFinished(e -> isPlaying = false);
+        timeline.setOnFinished(e -> {
+            isPlaying = false;
+            if (onComplete != null) {
+                onComplete.run();
+            }
+        });
         timeline.play();
     }
 

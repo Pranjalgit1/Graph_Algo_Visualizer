@@ -4,6 +4,7 @@ import algorithms.BFS;
 import algorithms.DFS;
 import algorithms.Kruskal;
 import algorithms.Dijkstra;
+import algorithms.Prims;
 import graph.Graph;
 import graph.GraphVisualData;
 import step.Step;
@@ -14,9 +15,12 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -25,6 +29,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainApp extends Application {
@@ -40,167 +45,110 @@ public class MainApp extends Application {
     private StepAnimator animator;
 
     private Label stepLabel;
-    private Label stepInfoLabel;
+    private Label stepDescriptionLabel;
+    private Label runtimeLabel;
+    private VBox runtimeSection;
     private Button btnPlayPause;
+
+    private String selectedAlgorithm = null;
+    private final List<Button> algoButtons = new ArrayList<>();
+    private long algorithmRuntimeNanos = 0;
 
     @Override
     public void start(Stage stage) {
 
-        // prepare graph frmo data
         graph = buildSampleGraph();
         visualData = new GraphVisualData();
         visualData.buildFromGraph(graph, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 190);
 
-        // canvas
+        // ── Canvas ──
         canvas = new Pane();
         canvas.setPrefSize(CANVAS_WIDTH, CANVAS_HEIGHT);
         canvas.setStyle("-fx-background-color: #ecf0f1;");
 
-        // render graph
         renderer = new GraphRenderer(canvas);
         renderer.render(visualData);
 
-        // animator
         animator = new StepAnimator(renderer, STEP_DELAY);
         animator.setVisualData(visualData);
-        animator.setOnStepChange(this::updateStepLabel);
+        animator.setOnStepChange(this::updateStepDisplay);
+        animator.setOnComplete(this::onAnimationComplete);
 
-        // header
-        Label title = new Label("Network Optimizer and Visualizer");
+        // ── Header ──
+        Label title = new Label("Graph Algorithm Visualizer");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         title.setStyle("-fx-text-fill: white;");
         HBox header = new HBox(title);
         header.setAlignment(Pos.CENTER);
-        header.setPadding(new Insets(12));
+        header.setPadding(new Insets(14));
         header.setStyle("-fx-background-color: #34495e;");
 
-        VBox legend = buildLegend();
+        // ── Right Sidebar ──
+        VBox sidebar = buildSidebar();
 
-        Button btnBFS = styledButton("▶ BFS", "#3498db", "#2980b9");
-        Button btnDFS = styledButton("▶ DFS", "#3498db", "#2980b9");
-        Button btnKruskal = styledButton("▶ Kruskal", "#3498db", "#2980b9");
-        Button btnDijkstra = styledButton("▶ Dijkstra", "#3498db", "#3498db");
-        Button btnReset = styledButton("↺ Reset", "#7f8c8d", "#636e72");
+        // ── Bottom Panel ──
+        VBox bottomPanel = buildBottomPanel();
 
-        btnBFS.setOnAction(e -> startAnimation(BFS.run(graph, 0)));
-        btnDFS.setOnAction(e -> startAnimation(DFS.run(graph, 0)));
-        btnKruskal.setOnAction(e -> startAnimation(Kruskal.run(graph)));
-        btnDijkstra.setOnAction(e -> startAnimation(Dijkstra.run(graph, 0)));
-        btnReset.setOnAction(e -> resetAll());
-
-        HBox algoBar = new HBox(12, btnBFS, btnDFS, btnKruskal, btnDijkstra, btnReset);
-        algoBar.setAlignment(Pos.CENTER);
-        algoBar.setPadding(new Insets(10, 0, 4, 0));
-
-        Button btnBack = styledButton("⏮ Back", "#8e44ad", "#6c3483");
-        btnPlayPause = styledButton("⏯ Play", "#27ae60", "#1e8449");
-        Button btnForward = styledButton("⏭ Next", "#8e44ad", "#6c3483");
-
-        btnBack.setOnAction(e -> animator.stepBackward());
-        btnForward.setOnAction(e -> animator.stepForward());
-        btnPlayPause.setOnAction(e -> togglePlayPause());
-
-        stepLabel = new Label("Step: 0 / 0");
-        stepLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        stepLabel.setStyle("-fx-text-fill: #ecf0f1;");
-
-        stepInfoLabel = new Label("");
-        stepInfoLabel.setFont(Font.font("Arial", 13));
-        stepInfoLabel.setStyle("-fx-text-fill: #bdc3c7;");
-
-        VBox stepInfo = new VBox(2, stepLabel, stepInfoLabel);
-        stepInfo.setAlignment(Pos.CENTER_LEFT);
-
-        HBox playbackBar = new HBox(12, btnBack, btnPlayPause, btnForward, stepInfo);
-        playbackBar.setAlignment(Pos.CENTER);
-        playbackBar.setPadding(new Insets(4, 0, 10, 0));
-
-        VBox bottomPanel = new VBox(algoBar, playbackBar);
-        bottomPanel.setAlignment(Pos.CENTER);
-        bottomPanel.setStyle("-fx-background-color: #2c3e50;");
-        bottomPanel.setPadding(new Insets(6, 12, 8, 12));
-
+        // ── Root Layout ──
         BorderPane root = new BorderPane();
         root.setTop(header);
         root.setCenter(canvas);
-        root.setRight(legend);
+        root.setRight(sidebar);
         root.setBottom(bottomPanel);
 
         Scene scene = new Scene(root);
-        stage.setTitle("Network Optimizer and Visualizer");
+        stage.setTitle("Graph Algorithm Visualizer");
         stage.setScene(scene);
         stage.setResizable(false);
         stage.show();
     }
 
-    private void startAnimation(List<Step> steps) {
-        resetAll();
-        animator.load(steps);
-        animator.play();
-        btnPlayPause.setText("⏸ Pause");
+    // ═══════════════════════════════════════════════════════
+    //  SIDEBAR: Legend + Step + Runtime
+    // ═══════════════════════════════════════════════════════
+
+    private VBox buildSidebar() {
+        VBox sidebar = new VBox(0);
+        sidebar.setPrefWidth(220);
+        sidebar.setStyle("-fx-background-color: #2c3e50;");
+
+        // ── Legend Section ──
+        VBox legendSection = buildLegendSection();
+
+        // ── Separator ──
+        Separator sep1 = styledSeparator();
+
+        // ── Step Section ──
+        VBox stepSection = buildStepSection();
+
+        // ── Separator ──
+        Separator sep2 = styledSeparator();
+
+        // ── Runtime Section ──
+        runtimeSection = buildRuntimeSection();
+
+        sidebar.getChildren().addAll(legendSection, sep1, stepSection, sep2, runtimeSection);
+        return sidebar;
     }
 
-    private void resetAll() {
-        animator.stop();
-        animator.load(List.of()); // clear steps
-        renderer.render(visualData);
-        btnPlayPause.setText("⏯ Play");
-        stepLabel.setText("Step: 0 / 0");
-        stepInfoLabel.setText("");
-    }
+    private VBox buildLegendSection() {
+        VBox box = new VBox(6);
+        box.setPadding(new Insets(16, 14, 12, 14));
 
-    private void togglePlayPause() {
-        if (animator.isPlaying()) {
-            animator.pause();
-            btnPlayPause.setText("⏯ Play");
-        } else {
-
-            animator.play();
-            btnPlayPause.setText("⏸ Pause");
-        }
-    }
-
-    private void updateStepLabel() {
-        int cur = animator.getCurrentIndex() + 1;
-        int total = animator.getTotalSteps();
-        stepLabel.setText("Step: " + cur + " / " + total);
-
-        // Show description of the current step
-        if (animator.getCurrentIndex() >= 0 && animator.getCurrentIndex() < total) {
-            stepInfoLabel.setText("  " + animator.getCurrentStep().toString());
-        }
-    }
-
-    private VBox buildLegend() {
-        VBox box = new VBox(8);
-        box.setPadding(new Insets(16, 14, 16, 14));
-        box.setStyle("-fx-background-color: #2c3e50; -fx-background-radius: 0;");
-        box.setPrefWidth(170);
-
-        Label heading = new Label("Legend");
-        heading.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        heading.setStyle("-fx-text-fill: white;");
+        Label heading = sectionHeading("Legend");
         box.getChildren().add(heading);
 
-        // ── Node colours ──
-        Label nodeHeading = new Label("Nodes");
-        nodeHeading.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        nodeHeading.setStyle("-fx-text-fill: #bdc3c7;");
-        nodeHeading.setPadding(new Insets(8, 0, 0, 0));
+        // Node colours
+        Label nodeHeading = subHeading("Nodes");
         box.getChildren().add(nodeHeading);
-
         box.getChildren().add(legendItem(Color.web("#3498db"), "Default"));
         box.getChildren().add(legendItem(Color.web("#f39c12"), "In Queue"));
         box.getChildren().add(legendItem(Color.web("#e74c3c"), "Visiting"));
         box.getChildren().add(legendItem(Color.web("#2ecc71"), "Processed"));
 
-        // ── Edge colours ──
-        Label edgeHeading = new Label("Edges");
-        edgeHeading.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        edgeHeading.setStyle("-fx-text-fill: #bdc3c7;");
-        edgeHeading.setPadding(new Insets(10, 0, 0, 0));
+        // Edge colours
+        Label edgeHeading = subHeading("Edges");
         box.getChildren().add(edgeHeading);
-
         box.getChildren().add(legendLine(Color.web("#95a5a6"), "Default"));
         box.getChildren().add(legendLine(Color.web("#e67e22"), "Exploring"));
         box.getChildren().add(legendLine(Color.web("#f1c40f"), "Considered"));
@@ -208,6 +156,242 @@ public class MainApp extends Application {
         box.getChildren().add(legendLine(Color.web("#c0392b"), "Rejected"));
 
         return box;
+    }
+
+    private VBox buildStepSection() {
+        VBox box = new VBox(6);
+        box.setPadding(new Insets(12, 14, 12, 14));
+
+        Label heading = sectionHeading("Step");
+        box.getChildren().add(heading);
+
+        stepDescriptionLabel = new Label("No algorithm running.");
+        stepDescriptionLabel.setFont(Font.font("Arial", 12));
+        stepDescriptionLabel.setStyle("-fx-text-fill: #bdc3c7;");
+        stepDescriptionLabel.setWrapText(true);
+        stepDescriptionLabel.setMaxWidth(190);
+
+        box.getChildren().add(stepDescriptionLabel);
+        return box;
+    }
+
+    private VBox buildRuntimeSection() {
+        VBox box = new VBox(6);
+        box.setPadding(new Insets(12, 14, 16, 14));
+
+        Label heading = sectionHeading("Runtime");
+        box.getChildren().add(heading);
+
+        runtimeLabel = new Label("—");
+        runtimeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        runtimeLabel.setStyle("-fx-text-fill: #bdc3c7;");
+
+        box.getChildren().add(runtimeLabel);
+        box.setVisible(false);
+        box.setManaged(false);
+        return box;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  BOTTOM PANEL: Algorithm Selection + Playback
+    // ═══════════════════════════════════════════════════════
+
+    private VBox buildBottomPanel() {
+        // ── Algorithm Selection Bar ──
+        Button btnBFS = algoToggleButton("BFS");
+        Button btnDFS = algoToggleButton("DFS");
+        Button btnDijkstra = algoToggleButton("Dijkstra");
+        Button btnKruskal = algoToggleButton("Kruskal");
+        Button btnPrims = algoToggleButton("Prim's");
+
+        algoButtons.add(btnBFS);
+        algoButtons.add(btnDFS);
+        algoButtons.add(btnDijkstra);
+        algoButtons.add(btnKruskal);
+        algoButtons.add(btnPrims);
+
+        btnBFS.setOnAction(e -> selectAlgorithm("BFS", btnBFS));
+        btnDFS.setOnAction(e -> selectAlgorithm("DFS", btnDFS));
+        btnDijkstra.setOnAction(e -> selectAlgorithm("Dijkstra", btnDijkstra));
+        btnKruskal.setOnAction(e -> selectAlgorithm("Kruskal", btnKruskal));
+        btnPrims.setOnAction(e -> selectAlgorithm("Prim's", btnPrims));
+
+        Label algoLabel = new Label("Algorithm:");
+        algoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        algoLabel.setStyle("-fx-text-fill: #ecf0f1;");
+
+        HBox algoBar = new HBox(10, algoLabel, btnBFS, btnDFS, btnDijkstra, btnKruskal, btnPrims);
+        algoBar.setAlignment(Pos.CENTER);
+        algoBar.setPadding(new Insets(10, 0, 6, 0));
+
+        // ── Playback Controls ──
+        Button btnBack = styledButton("\u23EE Prev", "#8e44ad", "#6c3483");
+        btnPlayPause = styledButton("\u25B6 Play", "#27ae60", "#1e8449");
+        Button btnForward = styledButton("\u23ED Next", "#8e44ad", "#6c3483");
+        Button btnReset = styledButton("\uD83D\uDD04 Reset", "#7f8c8d", "#636e72");
+
+        btnBack.setOnAction(e -> animator.stepBackward());
+        btnForward.setOnAction(e -> animator.stepForward());
+        btnPlayPause.setOnAction(e -> togglePlayPause());
+        btnReset.setOnAction(e -> resetAll());
+
+        stepLabel = new Label("Step: 0 / 0");
+        stepLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        stepLabel.setStyle("-fx-text-fill: #ecf0f1;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox playbackBar = new HBox(10, btnBack, btnPlayPause, btnForward, btnReset, spacer, stepLabel);
+        playbackBar.setAlignment(Pos.CENTER);
+        playbackBar.setPadding(new Insets(6, 16, 10, 16));
+
+        // ── Combined Bottom ──
+        Separator sep = styledSeparator();
+
+        VBox bottomPanel = new VBox(0, algoBar, sep, playbackBar);
+        bottomPanel.setAlignment(Pos.CENTER);
+        bottomPanel.setStyle("-fx-background-color: #2c3e50;");
+        bottomPanel.setPadding(new Insets(4, 12, 6, 12));
+
+        return bottomPanel;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  ALGORITHM SELECTION + EXECUTION
+    // ═══════════════════════════════════════════════════════
+
+    private void selectAlgorithm(String name, Button selected) {
+        resetAll();
+        selectedAlgorithm = name;
+
+        // Update toggle button styles
+        for (Button btn : algoButtons) {
+            applyAlgoButtonStyle(btn, false);
+        }
+        applyAlgoButtonStyle(selected, true);
+    }
+
+    private void runSelectedAlgorithm() {
+        if (selectedAlgorithm == null) return;
+
+        List<Step> steps;
+        long startTime = System.nanoTime();
+
+        switch (selectedAlgorithm) {
+            case "BFS":
+                steps = BFS.run(graph, 0);
+                break;
+            case "DFS":
+                steps = DFS.run(graph, 0);
+                break;
+            case "Dijkstra":
+                steps = Dijkstra.run(graph, 0);
+                break;
+            case "Kruskal":
+                steps = Kruskal.run(graph);
+                break;
+            case "Prim's":
+                steps = Prims.run(graph, 0);
+                break;
+            default:
+                return;
+        }
+
+        long endTime = System.nanoTime();
+        algorithmRuntimeNanos = endTime - startTime;
+
+        // Hide runtime until animation completes
+        runtimeSection.setVisible(false);
+        runtimeSection.setManaged(false);
+
+        animator.load(steps);
+        animator.play();
+        btnPlayPause.setText("\u23F8 Pause");
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  PLAYBACK CONTROLS
+    // ═══════════════════════════════════════════════════════
+
+    private void togglePlayPause() {
+        if (animator.isPlaying()) {
+            animator.pause();
+            btnPlayPause.setText("\u25B6 Play");
+        } else {
+            if (animator.getTotalSteps() == 0 && selectedAlgorithm != null) {
+                // First play after selecting algorithm
+                runSelectedAlgorithm();
+            } else {
+                animator.play();
+                btnPlayPause.setText("\u23F8 Pause");
+            }
+        }
+    }
+
+    private void resetAll() {
+        animator.stop();
+        animator.load(List.of());
+        renderer.render(visualData);
+        btnPlayPause.setText("\u25B6 Play");
+        stepLabel.setText("Step: 0 / 0");
+        stepDescriptionLabel.setText("No algorithm running.");
+        runtimeSection.setVisible(false);
+        runtimeSection.setManaged(false);
+        runtimeLabel.setText("\u2014");
+        algorithmRuntimeNanos = 0;
+    }
+
+    private void updateStepDisplay() {
+        int cur = animator.getCurrentIndex() + 1;
+        int total = animator.getTotalSteps();
+        stepLabel.setText("Step: " + cur + " / " + total);
+
+        Step currentStep = animator.getCurrentStep();
+        if (currentStep != null) {
+            stepDescriptionLabel.setText(currentStep.toDescription());
+        }
+    }
+
+    private void onAnimationComplete() {
+        btnPlayPause.setText("\u25B6 Play");
+
+        // Show runtime
+        double runtimeMs = algorithmRuntimeNanos / 1_000_000.0;
+        String formatted;
+        if (runtimeMs < 1.0) {
+            formatted = String.format("%.3f ms", runtimeMs);
+        } else {
+            formatted = String.format("%.2f ms", runtimeMs);
+        }
+        runtimeLabel.setText("Total: " + formatted);
+        runtimeSection.setVisible(true);
+        runtimeSection.setManaged(true);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  UI HELPER METHODS
+    // ═══════════════════════════════════════════════════════
+
+    private Label sectionHeading(String text) {
+        Label heading = new Label(text);
+        heading.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        heading.setStyle("-fx-text-fill: white;");
+        return heading;
+    }
+
+    private Label subHeading(String text) {
+        Label heading = new Label(text);
+        heading.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        heading.setStyle("-fx-text-fill: #bdc3c7;");
+        heading.setPadding(new Insets(6, 0, 0, 0));
+        return heading;
+    }
+
+    private Separator styledSeparator() {
+        Separator sep = new Separator();
+        sep.setStyle("-fx-background-color: #3d566e; -fx-padding: 0;");
+        return sep;
     }
 
     private HBox legendItem(Color color, String text) {
@@ -234,6 +418,43 @@ public class MainApp extends Application {
         return row;
     }
 
+    private Button algoToggleButton(String text) {
+        Button btn = new Button(text);
+        btn.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        applyAlgoButtonStyle(btn, false);
+        return btn;
+    }
+
+    private void applyAlgoButtonStyle(Button btn, boolean selected) {
+        String bg = selected ? "#3498db" : "#455a6e";
+        String hoverBg = selected ? "#2980b9" : "#3d566e";
+        String border = selected ? "#2980b9" : "transparent";
+
+        String base = "-fx-background-color: " + bg + "; -fx-text-fill: white; "
+                + "-fx-padding: 7 18; -fx-background-radius: 20; -fx-cursor: hand; "
+                + "-fx-border-color: " + border + "; -fx-border-radius: 20; -fx-border-width: 2;";
+        String hover = "-fx-background-color: " + hoverBg + "; -fx-text-fill: white; "
+                + "-fx-padding: 7 18; -fx-background-radius: 20; -fx-cursor: hand; "
+                + "-fx-border-color: " + border + "; -fx-border-radius: 20; -fx-border-width: 2;";
+
+        btn.setStyle(base);
+        btn.setOnMouseEntered(e -> btn.setStyle(hover));
+        btn.setOnMouseExited(e -> btn.setStyle(base));
+    }
+
+    private Button styledButton(String text, String bg, String hoverBg) {
+        String base = "-fx-background-color: " + bg + "; -fx-text-fill: white; "
+                + "-fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;";
+        String hover = "-fx-background-color: " + hoverBg + "; -fx-text-fill: white; "
+                + "-fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;";
+        Button btn = new Button(text);
+        btn.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        btn.setStyle(base);
+        btn.setOnMouseEntered(e -> btn.setStyle(hover));
+        btn.setOnMouseExited(e -> btn.setStyle(base));
+        return btn;
+    }
+
     private Graph buildSampleGraph() {
         Graph g = new Graph(false);
         g.addWeightedEdge(0, 1, 4);
@@ -244,19 +465,6 @@ public class MainApp extends Application {
         g.addWeightedEdge(3, 4, 9);
         g.addWeightedEdge(4, 5, 6);
         return g;
-    }
-
-    private Button styledButton(String text, String bg, String hoverBg) {
-        String base = "-fx-background-color: " + bg + "; -fx-text-fill: white; "
-                + "-fx-padding: 8 16; -fx-background-radius: 5; -fx-cursor: hand;";
-        String hover = "-fx-background-color: " + hoverBg + "; -fx-text-fill: white; "
-                + "-fx-padding: 8 16; -fx-background-radius: 5; -fx-cursor: hand;";
-        Button btn = new Button(text);
-        btn.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        btn.setStyle(base);
-        btn.setOnMouseEntered(e -> btn.setStyle(hover));
-        btn.setOnMouseExited(e -> btn.setStyle(base));
-        return btn;
     }
 
     public static void main(String[] args) {
