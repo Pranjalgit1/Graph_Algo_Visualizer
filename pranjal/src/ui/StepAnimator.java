@@ -123,6 +123,11 @@ public class StepAnimator {
         currentIndex++;
         processStep(steps.get(currentIndex));
         fireStepChange();
+
+        // fixing of no runtime on next button click
+        if (currentIndex == steps.size() - 1 && onComplete != null) {
+            onComplete.run();
+        }
     }
 
     public void stepBackward() {
