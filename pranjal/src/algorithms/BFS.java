@@ -15,36 +15,27 @@ public class BFS {
 
     public static List<Step> run(Graph graph, int start) {
         List<Step> steps = new ArrayList<>();
+        
         Set<Integer> visited = new HashSet<>();
-        Queue<Integer> queue = new LinkedList<>();
-
-        // pass start node to queue
+        Queue<Integer> q = new LinkedList<>(); 
         visited.add(start);
-        queue.add(start);
+        q.add(start);
         steps.add(Step.nodeStep(StepType.ADD_TO_QUEUE, start));
 
-        while (!queue.isEmpty()) {
-            int current = queue.poll();
-            steps.add(Step.nodeStep(StepType.REMOVE_FROM_QUEUE, current));
-
-            // Visit this node
-            steps.add(Step.nodeStep(StepType.VISIT_NODE, current));
-
-            for (int[] neighbor : graph.getNeighbors(current)) {
-                int next = neighbor[0];
-
-                // Record edge exploration
-                steps.add(Step.edgeStep(StepType.EXPLORE_EDGE, current, next));
-
-                if (!visited.contains(next)) {
-                    visited.add(next);
-                    queue.add(next);
-                    steps.add(Step.nodeStep(StepType.ADD_TO_QUEUE, next));
+        while (!q.isEmpty()) {
+            int curr = q.poll();
+            steps.add(Step.nodeStep(StepType.REMOVE_FROM_QUEUE, curr));
+            steps.add(Step.nodeStep(StepType.VISIT_NODE, curr));
+            for (int[] neighbor : graph.getNeighbors(curr)) {
+                int nextNode = neighbor[0];
+                steps.add(Step.edgeStep(StepType.EXPLORE_EDGE, curr, nextNode));
+                if (!visited.contains(nextNode)) {
+                    visited.add(nextNode);
+                    q.add(nextNode);
+                    steps.add(Step.nodeStep(StepType.ADD_TO_QUEUE, nextNode));
                 }
             }
-
-            // Done processing this node
-            steps.add(Step.nodeStep(StepType.PROCESS_NODE, current));
+            steps.add(Step.nodeStep(StepType.PROCESS_NODE, curr));
         }
 
         return steps;
