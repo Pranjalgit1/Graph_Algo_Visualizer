@@ -8,6 +8,7 @@ import algorithms.Prims;
 import graph.Graph;
 import graph.GraphVisualData;
 import step.Step;
+import step.StepType;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -30,7 +31,9 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MainApp extends Application {
 
@@ -38,10 +41,12 @@ public class MainApp extends Application {
     private static final double CANVAS_HEIGHT = 550;
     private static final double STEP_DELAY = 0.6;
 
+    private Stage primaryStage;
     private Pane canvas;
     private GraphRenderer renderer;
     private GraphVisualData visualData;
     private Graph graph;
+    private boolean isDirectedGraph = false;
     private StepAnimator animator;
 
     private Label stepLabel;
@@ -54,10 +59,35 @@ public class MainApp extends Application {
     private final List<Button> algoButtons = new ArrayList<>();
     private long algorithmRuntimeNanos = 0;
 
+    // Traversal display
+    private Label traversalLabel;
+    private VBox traversalBox;
+    private final Set<Integer> traversalOrderSet = new LinkedHashSet<>();
+
+    // Track Kruskal/Prim's buttons for disabling on directed graphs
+    private Button btnKruskal;
+    private Button btnPrims;
+
     @Override
     public void start(Stage stage) {
+        this.primaryStage = stage;
+        showInputScreen();
+    }
 
-        graph = buildSampleGraph();
+    private void showInputScreen() {
+        GraphInputScreen inputScreen = new GraphInputScreen(primaryStage);
+        inputScreen.setOnVisualize((graph, isDirected) -> {
+            showVisualization(graph, isDirected);
+        });
+        inputScreen.show();
+    }
+
+    private void showVisualization(Graph inputGraph, boolean isDirected) {
+        this.graph = inputGraph;
+        this.isDirectedGraph = isDirected;
+        this.selectedAlgorithm = null;
+        this.algoButtons.clear();
+
         visualData = new GraphVisualData();
         visualData.buildFromGraph(graph, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 190);
 
@@ -69,16 +99,31 @@ public class MainApp extends Application {
         renderer = new GraphRenderer(canvas);
         renderer.render(visualData);
 
+        // ── Traversal Overlay ──
+        buildTraversalOverlay();
+
         animator = new StepAnimator(renderer, STEP_DELAY);
         animator.setVisualData(visualData);
         animator.setOnStepChange(this::updateStepDisplay);
         animator.setOnComplete(this::onAnimationComplete);
 
         // ── Header ──
+        Button newGraphBtn = styledButton("\u2190 New Graph", "#8e44ad", "#6c3483");
+        newGraphBtn.setOnAction(e -> {
+            if (animator != null) animator.stop();
+            showInputScreen();
+        });
+
         Label title = new Label("Graph Algorithm Visualizer");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         title.setStyle("-fx-text-fill: white;");
-        HBox header = new HBox(title);
+
+        Region leftSpacer = new Region();
+        HBox.setHgrow(leftSpacer, Priority.ALWAYS);
+        Region rightSpacer = new Region();
+        HBox.setHgrow(rightSpacer, Priority.ALWAYS);
+
+        HBox header = new HBox(10, newGraphBtn, leftSpacer, title, rightSpacer);
         header.setAlignment(Pos.CENTER);
         header.setPadding(new Insets(14));
         header.setStyle("-fx-background-color: #34495e;");
@@ -89,22 +134,33 @@ public class MainApp extends Application {
         // ── Bottom Panel ──
         VBox bottomPanel = buildBottomPanel();
 
+        // ── Canvas with traversal overlay ──
+        Pane canvasContainer = new Pane();
+        canvasContainer.setPrefSize(CANVAS_WIDTH, CANVAS_HEIGHT);
+        canvasContainer.getChildren().addAll(canvas, traversalBox);
+
+        // Bind overlay to bottom-right of canvas
+        traversalBox.layoutXProperty().bind(
+                canvasContainer.widthProperty().subtract(traversalBox.widthProperty()).subtract(10));
+        traversalBox.layoutYProperty().bind(
+                canvasContainer.heightProperty().subtract(traversalBox.heightProperty()).subtract(10));
+
         // ── Root Layout ──
         BorderPane root = new BorderPane();
         root.setTop(header);
-        root.setCenter(canvas);
+        root.setCenter(canvasContainer);
         root.setRight(sidebar);
         root.setBottom(bottomPanel);
 
         Scene scene = new Scene(root);
-        stage.setTitle("Graph Algorithm Visualizer");
-        stage.setScene(scene);
-        stage.setResizable(false);
-        stage.show();
+        primaryStage.setTitle("Graph Algorithm Visualizer");
+        primaryStage.setScene(scene);
+        primaryStage.setResizable(false);
+        primaryStage.show();
     }
 
     // ═══════════════════════════════════════════════════════
-    //  SIDEBAR: Legend + Step + Runtime
+    // SIDEBAR: Legend + Step + Runtime
     // ═══════════════════════════════════════════════════════
 
     private VBox buildSidebar() {
@@ -182,7 +238,7 @@ public class MainApp extends Application {
         Label heading = sectionHeading("Runtime");
         box.getChildren().add(heading);
 
-        runtimeLabel = new Label("—");
+        runtimeLabel = new Label("\u2014");
         runtimeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
         runtimeLabel.setStyle("-fx-text-fill: #bdc3c7;");
 
@@ -193,7 +249,7 @@ public class MainApp extends Application {
     }
 
     // ═══════════════════════════════════════════════════════
-    //  BOTTOM PANEL: Algorithm Selection + Playback
+    // BOTTOM PANEL: Algorithm Selection + Playback
     // ═══════════════════════════════════════════════════════
 
     private VBox buildBottomPanel() {
@@ -201,8 +257,8 @@ public class MainApp extends Application {
         Button btnBFS = algoToggleButton("BFS");
         Button btnDFS = algoToggleButton("DFS");
         Button btnDijkstra = algoToggleButton("Dijkstra");
-        Button btnKruskal = algoToggleButton("Kruskal");
-        Button btnPrims = algoToggleButton("Prim's");
+        btnKruskal = algoToggleButton("Kruskal");
+        btnPrims = algoToggleButton("Prim's");
 
         algoButtons.add(btnBFS);
         algoButtons.add(btnDFS);
@@ -215,6 +271,14 @@ public class MainApp extends Application {
         btnDijkstra.setOnAction(e -> selectAlgorithm("Dijkstra", btnDijkstra));
         btnKruskal.setOnAction(e -> selectAlgorithm("Kruskal", btnKruskal));
         btnPrims.setOnAction(e -> selectAlgorithm("Prim's", btnPrims));
+
+        // Disable Kruskal & Prim's for directed graphs
+        if (isDirectedGraph) {
+            btnKruskal.setDisable(true);
+            btnPrims.setDisable(true);
+            btnKruskal.setOpacity(0.4);
+            btnPrims.setOpacity(0.4);
+        }
 
         Label algoLabel = new Label("Algorithm:");
         algoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
@@ -258,7 +322,7 @@ public class MainApp extends Application {
     }
 
     // ═══════════════════════════════════════════════════════
-    //  ALGORITHM SELECTION + EXECUTION
+    // ALGORITHM SELECTION + EXECUTION
     // ═══════════════════════════════════════════════════════
 
     private void selectAlgorithm(String name, Button selected) {
@@ -273,7 +337,8 @@ public class MainApp extends Application {
     }
 
     private void runSelectedAlgorithm() {
-        if (selectedAlgorithm == null) return;
+        if (selectedAlgorithm == null)
+            return;
 
         List<Step> steps;
         long startTime = System.nanoTime();
@@ -311,7 +376,7 @@ public class MainApp extends Application {
     }
 
     // ═══════════════════════════════════════════════════════
-    //  PLAYBACK CONTROLS
+    // PLAYBACK CONTROLS
     // ═══════════════════════════════════════════════════════
 
     private void togglePlayPause() {
@@ -340,6 +405,10 @@ public class MainApp extends Application {
         runtimeSection.setManaged(false);
         runtimeLabel.setText("\u2014");
         algorithmRuntimeNanos = 0;
+        // Reset traversal display
+        traversalOrderSet.clear();
+        traversalLabel.setText("");
+        traversalBox.setVisible(false);
     }
 
     private void updateStepDisplay() {
@@ -350,6 +419,54 @@ public class MainApp extends Application {
         Step currentStep = animator.getCurrentStep();
         if (currentStep != null) {
             stepDescriptionLabel.setText(currentStep.toDescription());
+        }
+
+        // Rebuild traversal display from all steps up to current index
+        rebuildTraversalDisplay();
+    }
+
+    private void rebuildTraversalDisplay() {
+        traversalOrderSet.clear();
+
+        int currentIdx = animator.getCurrentIndex();
+        if (currentIdx < 0) {
+            traversalLabel.setText("");
+            traversalBox.setVisible(false);
+            return;
+        }
+
+        boolean isTraversalAlgo = "BFS".equals(selectedAlgorithm)
+                || "DFS".equals(selectedAlgorithm)
+                || "Dijkstra".equals(selectedAlgorithm);
+
+        if (!isTraversalAlgo) {
+            traversalLabel.setText("");
+            traversalBox.setVisible(false);
+            return;
+        }
+
+        // Scan all steps from 0 to current index
+        for (int i = 0; i <= currentIdx; i++) {
+            Step s = animator.getStepAt(i);
+            if (s != null && s.getType() == StepType.VISIT_NODE) {
+                traversalOrderSet.add(s.getNode());
+            }
+        }
+
+        // Build display string
+        if (!traversalOrderSet.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            boolean first = true;
+            for (int node : traversalOrderSet) {
+                if (!first) sb.append(" \u2192 ");
+                sb.append(node);
+                first = false;
+            }
+            traversalLabel.setText(sb.toString());
+            traversalBox.setVisible(true);
+        } else {
+            traversalLabel.setText("");
+            traversalBox.setVisible(false);
         }
     }
 
@@ -370,7 +487,32 @@ public class MainApp extends Application {
     }
 
     // ═══════════════════════════════════════════════════════
-    //  UI HELPER METHODS
+    // TRAVERSAL OVERLAY
+    // ═══════════════════════════════════════════════════════
+
+    private void buildTraversalOverlay() {
+        traversalLabel = new Label("");
+        traversalLabel.setFont(Font.font("Consolas", FontWeight.BOLD, 13));
+        traversalLabel.setStyle("-fx-text-fill: #ecf0f1;");
+        traversalLabel.setWrapText(true);
+        traversalLabel.setMaxWidth(380);
+
+        Label traversalTitle = new Label("\uD83D\uDCCC Traversal Order");
+        traversalTitle.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        traversalTitle.setStyle("-fx-text-fill: #f39c12;");
+
+        traversalBox = new VBox(4, traversalTitle, traversalLabel);
+        traversalBox.setPadding(new Insets(8, 12, 8, 12));
+        traversalBox.setStyle(
+                "-fx-background-color: rgba(44, 62, 80, 0.92);" +
+                "-fx-background-radius: 8;" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 10, 0, 0, 2);");
+        traversalBox.setMaxWidth(400);
+        traversalBox.setVisible(false);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // UI HELPER METHODS
     // ═══════════════════════════════════════════════════════
 
     private Label sectionHeading(String text) {
@@ -453,18 +595,6 @@ public class MainApp extends Application {
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e -> btn.setStyle(base));
         return btn;
-    }
-
-    private Graph buildSampleGraph() {
-        Graph g = new Graph(false);
-        g.addWeightedEdge(0, 1, 4);
-        g.addWeightedEdge(0, 3, 11);
-        g.addWeightedEdge(1, 2, 8);
-        g.addWeightedEdge(1, 4, 2);
-        g.addWeightedEdge(2, 5, 7);
-        g.addWeightedEdge(3, 4, 9);
-        g.addWeightedEdge(4, 5, 6);
-        return g;
     }
 
     public static void main(String[] args) {

@@ -164,6 +164,13 @@ public class StepAnimator {
         return steps.get(currentIndex);
     }
 
+    public Step getStepAt(int index) {
+        if (steps == null || index < 0 || index >= steps.size()) {
+            return null;
+        }
+        return steps.get(index);
+    }
+
     private void processStep(Step step) {
         switch (step.getType()) {
 
