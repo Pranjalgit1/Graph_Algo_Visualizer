@@ -241,8 +241,31 @@ public class GraphInputScreen {
     
 
     private HBox buildBottomPanel() {
-        Button loadSampleBtn = accentButton("\uD83D\uDCE5 Load Sample", "#8e44ad", "#6c3483");
-        loadSampleBtn.setOnAction(e -> loadSampleGraph());
+        javafx.scene.control.MenuButton sampleMenu = new javafx.scene.control.MenuButton("\uD83D\uDCE5 Load Sample");
+        sampleMenu.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        String menuBase = "-fx-background-color: #8e44ad; -fx-text-fill: white; "
+                + "-fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;";
+        sampleMenu.setStyle(menuBase);
+
+        javafx.scene.control.MenuItem simple = new javafx.scene.control.MenuItem("Simple (6 nodes) — General purpose");
+        simple.setOnAction(e -> loadSampleSimple());
+
+        javafx.scene.control.MenuItem tree = new javafx.scene.control.MenuItem("Small Tree (4 nodes) — BFS / DFS");
+        tree.setOnAction(e -> loadSampleTree());
+
+        javafx.scene.control.MenuItem complete = new javafx.scene.control.MenuItem("Complete K5 (5 nodes) — Kruskal / Prim's / TSP");
+        complete.setOnAction(e -> loadSampleComplete());
+
+        javafx.scene.control.MenuItem negEdges = new javafx.scene.control.MenuItem("Negative Edges (5 nodes) — Bellman-Ford");
+        negEdges.setOnAction(e -> loadSampleNegative());
+
+        javafx.scene.control.MenuItem dag = new javafx.scene.control.MenuItem("DAG (6 nodes) — Topological Sort");
+        dag.setOnAction(e -> loadSampleDAG());
+
+        javafx.scene.control.MenuItem disconnected = new javafx.scene.control.MenuItem("Disconnected (6 nodes) — Edge cases");
+        disconnected.setOnAction(e -> loadSampleDisconnected());
+
+        sampleMenu.getItems().addAll(simple, tree, complete, negEdges, dag, disconnected);
 
         Button clearAllBtn = accentButton("\uD83D\uDDD1 Clear All", "#7f8c8d", "#636e72");
         clearAllBtn.setOnAction(e -> clearAll());
@@ -255,7 +278,7 @@ public class GraphInputScreen {
         visualizeBtn.setPadding(new Insets(10, 28, 10, 28));
         visualizeBtn.setOnAction(e -> visualize());
 
-        HBox bottom = new HBox(12, loadSampleBtn, clearAllBtn, spacer, visualizeBtn);
+        HBox bottom = new HBox(12, sampleMenu, clearAllBtn, spacer, visualizeBtn);
         bottom.setAlignment(Pos.CENTER);
         bottom.setPadding(new Insets(12, 20, 16, 20));
         bottom.setStyle("-fx-background-color: #34495e;");
@@ -287,8 +310,8 @@ public class GraphInputScreen {
         }
         try {
             weight = Integer.parseInt(weightField.getText().trim());
-            if (weight <= 0) {
-                errorLabel.setText("Weight must be a positive integer.");
+            if (weight == 0) {
+                errorLabel.setText("Weight cannot be zero.");
                 return;
             }
         } catch (NumberFormatException e) {
@@ -342,12 +365,11 @@ public class GraphInputScreen {
         }
     }
 
-    private void loadSampleGraph() {
+    private void loadSampleSimple() {
         nodeCountField.setText("6");
         directedRadio.setSelected(false);
         undirectedRadio.setSelected(true);
         edgeData.clear();
-
         edgeData.add(new EdgeEntry(0, 1, 4));
         edgeData.add(new EdgeEntry(0, 3, 11));
         edgeData.add(new EdgeEntry(1, 2, 8));
@@ -355,7 +377,76 @@ public class GraphInputScreen {
         edgeData.add(new EdgeEntry(2, 5, 7));
         edgeData.add(new EdgeEntry(3, 4, 9));
         edgeData.add(new EdgeEntry(4, 5, 6));
+        errorLabel.setText("");
+    }
 
+    private void loadSampleTree() {
+        nodeCountField.setText("4");
+        directedRadio.setSelected(false);
+        undirectedRadio.setSelected(true);
+        edgeData.clear();
+        edgeData.add(new EdgeEntry(0, 1, 3));
+        edgeData.add(new EdgeEntry(0, 2, 5));
+        edgeData.add(new EdgeEntry(1, 3, 2));
+        errorLabel.setText("");
+    }
+
+    private void loadSampleComplete() {
+        nodeCountField.setText("5");
+        directedRadio.setSelected(false);
+        undirectedRadio.setSelected(true);
+        edgeData.clear();
+        edgeData.add(new EdgeEntry(0, 1, 2));
+        edgeData.add(new EdgeEntry(0, 2, 6));
+        edgeData.add(new EdgeEntry(0, 3, 3));
+        edgeData.add(new EdgeEntry(0, 4, 7));
+        edgeData.add(new EdgeEntry(1, 2, 4));
+        edgeData.add(new EdgeEntry(1, 3, 8));
+        edgeData.add(new EdgeEntry(1, 4, 5));
+        edgeData.add(new EdgeEntry(2, 3, 1));
+        edgeData.add(new EdgeEntry(2, 4, 9));
+        edgeData.add(new EdgeEntry(3, 4, 3));
+        errorLabel.setText("");
+    }
+
+    private void loadSampleNegative() {
+        nodeCountField.setText("5");
+        directedRadio.setSelected(true);
+        undirectedRadio.setSelected(false);
+        edgeData.clear();
+        edgeData.add(new EdgeEntry(0, 1, 6));
+        edgeData.add(new EdgeEntry(0, 3, 7));
+        edgeData.add(new EdgeEntry(1, 2, 5));
+        edgeData.add(new EdgeEntry(1, 3, 8));
+        edgeData.add(new EdgeEntry(1, 4, -4));
+        edgeData.add(new EdgeEntry(2, 1, -2));
+        edgeData.add(new EdgeEntry(3, 2, -3));
+        errorLabel.setText("");
+    }
+
+    private void loadSampleDAG() {
+        nodeCountField.setText("6");
+        directedRadio.setSelected(true);
+        undirectedRadio.setSelected(false);
+        edgeData.clear();
+        edgeData.add(new EdgeEntry(5, 2, 1));
+        edgeData.add(new EdgeEntry(5, 0, 1));
+        edgeData.add(new EdgeEntry(4, 0, 1));
+        edgeData.add(new EdgeEntry(4, 1, 1));
+        edgeData.add(new EdgeEntry(2, 3, 1));
+        edgeData.add(new EdgeEntry(3, 1, 1));
+        errorLabel.setText("");
+    }
+
+    private void loadSampleDisconnected() {
+        nodeCountField.setText("6");
+        directedRadio.setSelected(false);
+        undirectedRadio.setSelected(true);
+        edgeData.clear();
+        edgeData.add(new EdgeEntry(0, 1, 3));
+        edgeData.add(new EdgeEntry(1, 2, 4));
+        edgeData.add(new EdgeEntry(3, 4, 5));
+        edgeData.add(new EdgeEntry(4, 5, 2));
         errorLabel.setText("");
     }
 

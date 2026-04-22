@@ -5,7 +5,7 @@ public class VisualEdge {
 
     private final int u; 
     private final int v; 
-    private final int weight; 
+    private int weight; 
 
     public VisualEdge(int u, int v, int weight) {
         this.u = u;
@@ -28,6 +28,10 @@ public class VisualEdge {
 
     public int getWeight() {
         return weight;
+    }
+
+    public void setWeight(int weight) {
+        this.weight = weight;
     }
 
     @Override

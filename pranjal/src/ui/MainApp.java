@@ -20,8 +20,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -42,14 +45,12 @@ import java.util.Set;
 
 public class MainApp extends Application {
 
-    
     private static final double CANVAS_WIDTH = 750;
     private static final double CANVAS_HEIGHT = 550;
     private static final double COMP_CANVAS_W = 680;
     private static final double COMP_CANVAS_H = 480;
     private static final double BASE_STEP_DELAY = 0.6;
 
-    
     private Stage primaryStage;
     private Graph graph;
     private boolean isDirectedGraph = false;
@@ -59,7 +60,6 @@ public class MainApp extends Application {
     private Slider speedSlider;
     private Label speedLabel;
 
-    
     private Pane canvas;
     private GraphRenderer renderer;
     private GraphVisualData visualData;
@@ -78,7 +78,19 @@ public class MainApp extends Application {
     private Button btnPrims;
     private Button btnTopoSort;
 
-    
+    // Feature #2: Source node
+    private int sourceNode = 0;
+    private Label sourceLabel;
+
+    // Feature #4: Progress bar
+    private ProgressBar progressBar;
+
+    // Feature #6: Algorithm info panel
+    private VBox algoInfoPanel;
+    private Label algoNameLabel;
+    private Label algoComplexityLabel;
+    private VBox pseudocodeBox;
+
     private Pane leftCanvas;
     private GraphRenderer leftRenderer;
     private GraphVisualData leftVisualData;
@@ -93,7 +105,6 @@ public class MainApp extends Application {
     private VBox leftTraversalBox;
     private final Set<Integer> leftTraversalOrderSet = new LinkedHashSet<>();
 
-    
     private Pane rightCanvas;
     private GraphRenderer rightRenderer;
     private GraphVisualData rightVisualData;
@@ -108,7 +119,6 @@ public class MainApp extends Application {
     private VBox rightTraversalBox;
     private final Set<Integer> rightTraversalOrderSet = new LinkedHashSet<>();
 
-    
     private boolean leftComplete = false;
     private boolean rightComplete = false;
 
@@ -131,10 +141,6 @@ public class MainApp extends Application {
         pranjal();
     }
 
-    
-    
-    
-
     private void showVisualization(Graph inputGraph, boolean isDirected) {
         this.graph = inputGraph;
         this.isDirectedGraph = isDirected;
@@ -151,6 +157,38 @@ public class MainApp extends Application {
         }
 
         Scene scene = new Scene(root);
+
+        // Feature #1: Keyboard shortcuts
+        scene.setOnKeyPressed(e -> {
+            if (comparisonMode) {
+                switch (e.getCode()) {
+                    case SPACE: compTogglePlayPause(); break;
+                    case RIGHT: compStepForward(); break;
+                    case LEFT: compStepBackward(); break;
+                    case R: compResetAll(); break;
+                    default: break;
+                }
+            } else {
+                switch (e.getCode()) {
+                    case SPACE: togglePlayPause(); break;
+                    case RIGHT: if (animator != null) animator.stepForward(); break;
+                    case LEFT: if (animator != null) animator.stepBackward(); break;
+                    case R: resetAll(); break;
+                    case DIGIT1: case NUMPAD1: selectAlgoByIndex(0); break;
+                    case DIGIT2: case NUMPAD2: selectAlgoByIndex(1); break;
+                    case DIGIT3: case NUMPAD3: selectAlgoByIndex(2); break;
+                    case DIGIT4: case NUMPAD4: selectAlgoByIndex(3); break;
+                    case DIGIT5: case NUMPAD5: selectAlgoByIndex(4); break;
+                    case DIGIT6: case NUMPAD6: selectAlgoByIndex(5); break;
+                    case DIGIT7: case NUMPAD7: selectAlgoByIndex(6); break;
+                    case DIGIT8: case NUMPAD8: selectAlgoByIndex(7); break;
+                    case DIGIT9: case NUMPAD9: selectAlgoByIndex(8); break;
+                    default: break;
+                }
+            }
+            e.consume();
+        });
+
         primaryStage.setTitle("Graph Algorithm Visualizer");
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
@@ -177,6 +215,8 @@ public class MainApp extends Application {
             comparisonMode = !comparisonMode;
             showVisualization(graph, isDirectedGraph);
         });
+        compToggle.setVisible(false);
+        compToggle.setManaged(false); // so it doesn't take up space
 
         Region leftSpacer = new Region();
         HBox.setHgrow(leftSpacer, Priority.ALWAYS);
@@ -200,10 +240,6 @@ public class MainApp extends Application {
             rightAnimator.stop();
     }
 
-    
-    
-    
-
     private void buildSingleLayout(BorderPane root, HBox header) {
         this.selectedAlgorithm = null;
         this.algoButtons.clear();
@@ -211,15 +247,20 @@ public class MainApp extends Application {
         visualData = new GraphVisualData();
         visualData.buildFromGraph(graph, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 190);
 
-        
         canvas = new Pane();
         canvas.setPrefSize(CANVAS_WIDTH, CANVAS_HEIGHT);
         canvas.setStyle("-fx-background-color: #ecf0f1;");
 
         renderer = new GraphRenderer(canvas);
+        renderer.setSelectedSourceNode(sourceNode);
+        renderer.setOnSourceNodeChanged(() -> {
+            sourceNode = renderer.getSelectedSourceNode();
+            if (sourceLabel != null) {
+                sourceLabel.setText("Source: Node " + sourceNode);
+            }
+        });
         renderer.render(visualData);
 
-        
         buildTraversalOverlay();
 
         animator = new StepAnimator(renderer, BASE_STEP_DELAY / currentSpeedMultiplier);
@@ -227,17 +268,14 @@ public class MainApp extends Application {
         animator.setOnStepChange(this::updateStepDisplay);
         animator.setOnComplete(this::onAnimationComplete);
 
-        
         VBox sidebar = buildSidebar();
 
         VBox bottomPanel = buildBottomPanel();
 
-        
         Pane canvasContainer = new Pane();
         canvasContainer.setPrefSize(CANVAS_WIDTH, CANVAS_HEIGHT);
         canvasContainer.getChildren().addAll(canvas, traversalBox);
 
-        
         traversalBox.layoutXProperty().bind(
                 canvasContainer.widthProperty().subtract(traversalBox.widthProperty()).subtract(10));
         traversalBox.layoutYProperty().bind(
@@ -249,25 +287,39 @@ public class MainApp extends Application {
         root.setBottom(bottomPanel);
     }
 
-    
-
     private VBox buildSidebar() {
         VBox sidebar = new VBox(0);
-        sidebar.setPrefWidth(220);
+        sidebar.setPrefWidth(240);
         sidebar.setStyle("-fx-background-color: #2c3e50;");
         pranjal();
         VBox legendSection = buildLegendSection();
 
         Separator sep1 = styledSeparator();
 
+        // Feature #2: Source node display
+        VBox sourceSection = buildSourceSection();
+
+        Separator sep1b = styledSeparator();
+
         VBox stepSection = buildStepSection();
 
         Separator sep2 = styledSeparator();
 
-        
         runtimeSection = buildRuntimeSection();
 
-        sidebar.getChildren().addAll(legendSection, sep1, stepSection, sep2, runtimeSection);
+        Separator sep3 = styledSeparator();
+
+        // Feature #6: Algorithm info panel
+        algoInfoPanel = buildAlgoInfoPanel();
+
+        ScrollPane sidebarScroll = new ScrollPane(new VBox(0, legendSection, sep1, sourceSection, sep1b, stepSection, sep2, runtimeSection, sep3, algoInfoPanel));
+        sidebarScroll.setFitToWidth(true);
+        sidebarScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        sidebarScroll.setStyle("-fx-background: #2c3e50; -fx-background-color: #2c3e50;");
+        sidebarScroll.setPrefWidth(240);
+
+        sidebar.getChildren().add(sidebarScroll);
+        VBox.setVgrow(sidebarScroll, Priority.ALWAYS);
         return sidebar;
     }
 
@@ -278,7 +330,6 @@ public class MainApp extends Application {
         Label heading = sectionHeading("Legend");
         box.getChildren().add(heading);
 
-        
         Label nodeHeading = subHeading("Nodes");
         box.getChildren().add(nodeHeading);
         box.getChildren().add(legendItem(Color.web("#3498db"), "Default"));
@@ -288,7 +339,6 @@ public class MainApp extends Application {
         box.getChildren().add(legendItem(Color.web("#e91e63"), "Neg. Cycle"));
         box.getChildren().add(legendItem(Color.web("#1a237e"), "Topo Push"));
 
-        
         Label edgeHeading = subHeading("Edges");
         box.getChildren().add(edgeHeading);
         box.getChildren().add(legendLine(Color.web("#95a5a6"), "Default"));
@@ -302,6 +352,78 @@ public class MainApp extends Application {
         return box;
     }
 
+    private VBox buildSourceSection() {
+        VBox box = new VBox(4);
+        box.setPadding(new Insets(10, 14, 8, 14));
+
+        Label heading = sectionHeading("\uD83C\uDFAF Source");
+        sourceLabel = new Label("Source: Node " + sourceNode);
+        sourceLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        sourceLabel.setStyle("-fx-text-fill: #e74c3c;");
+
+        Label hint = new Label("Click a node to change");
+        hint.setFont(Font.font("Arial", 10));
+        hint.setStyle("-fx-text-fill: #7f8c8d;");
+
+        box.getChildren().addAll(heading, sourceLabel, hint);
+        return box;
+    }
+
+    private VBox buildAlgoInfoPanel() {
+        VBox box = new VBox(6);
+        box.setPadding(new Insets(12, 14, 12, 14));
+
+        Label heading = sectionHeading("\uD83D\uDCCB Algorithm");
+        algoNameLabel = new Label("No algorithm selected");
+        algoNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        algoNameLabel.setStyle("-fx-text-fill: #f39c12;");
+        algoNameLabel.setWrapText(true);
+        algoNameLabel.setMaxWidth(210);
+
+        algoComplexityLabel = new Label("");
+        algoComplexityLabel.setFont(Font.font("Arial", 11));
+        algoComplexityLabel.setStyle("-fx-text-fill: #bdc3c7;");
+        algoComplexityLabel.setWrapText(true);
+        algoComplexityLabel.setMaxWidth(210);
+
+        pseudocodeBox = new VBox(1);
+        pseudocodeBox.setPadding(new Insets(6, 0, 0, 0));
+
+        box.getChildren().addAll(heading, algoNameLabel, algoComplexityLabel, pseudocodeBox);
+        return box;
+    }
+
+    private void updateAlgoInfoPanel(String algorithm, step.StepType currentStepType) {
+        AlgorithmInfo info = AlgorithmInfo.get(algorithm);
+        if (info == null) {
+            algoNameLabel.setText("No algorithm selected");
+            algoComplexityLabel.setText("");
+            pseudocodeBox.getChildren().clear();
+            return;
+        }
+
+        algoNameLabel.setText(info.getName());
+        algoComplexityLabel.setText("Time: " + info.getTimeComplexity() + "  |  Space: " + info.getSpaceComplexity());
+
+        pseudocodeBox.getChildren().clear();
+        String[] lines = info.getPseudocode();
+        int highlightLine = currentStepType != null ? info.getHighlightLine(currentStepType) : -1;
+
+        for (int i = 0; i < lines.length; i++) {
+            Label line = new Label(lines[i]);
+            line.setFont(Font.font("Consolas", 10));
+            line.setMaxWidth(210);
+            line.setWrapText(true);
+
+            if (i == highlightLine) {
+                line.setStyle("-fx-text-fill: #2ecc71; -fx-background-color: rgba(46,204,113,0.15); -fx-padding: 1 4;");
+            } else {
+                line.setStyle("-fx-text-fill: #95a5a6; -fx-padding: 1 4;");
+            }
+            pseudocodeBox.getChildren().add(line);
+        }
+    }
+
     private VBox buildStepSection() {
         VBox box = new VBox(6);
         box.setPadding(new Insets(12, 14, 12, 14));
@@ -313,7 +435,7 @@ public class MainApp extends Application {
         stepDescriptionLabel.setFont(Font.font("Arial", 12));
         stepDescriptionLabel.setStyle("-fx-text-fill: #bdc3c7;");
         stepDescriptionLabel.setWrapText(true);
-        stepDescriptionLabel.setMaxWidth(190);
+        stepDescriptionLabel.setMaxWidth(210);
 
         box.getChildren().add(stepDescriptionLabel);
         return box;
@@ -337,7 +459,7 @@ public class MainApp extends Application {
     }
 
     private VBox buildBottomPanel() {
-        
+
         Button btnBFS = algoToggleButton("BFS");
         Button btnDFS = algoToggleButton("DFS");
         Button btnDijkstra = algoToggleButton("Dijkstra");
@@ -369,7 +491,6 @@ public class MainApp extends Application {
         btnTopoSort.setOnAction(e -> selectAlgorithm("Topo Sort", btnTopoSort));
         btnTSP.setOnAction(e -> selectAlgorithm("TSP", btnTSP));
 
-        
         if (isDirectedGraph) {
             btnKruskal.setDisable(true);
             btnPrims.setDisable(true);
@@ -389,7 +510,6 @@ public class MainApp extends Application {
         algoBar.setAlignment(Pos.CENTER);
         algoBar.setPadding(new Insets(10, 0, 6, 0));
 
-        
         Button btnBack = styledButton("\u23EE Prev", "#8e44ad", "#6c3483");
         btnPlayPause = styledButton("\u25B6 Play", "#27ae60", "#1e8449");
         Button btnForward = styledButton("\u23ED Next", "#8e44ad", "#6c3483");
@@ -404,7 +524,6 @@ public class MainApp extends Application {
         stepLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         stepLabel.setStyle("-fx-text-fill: #ecf0f1;");
 
-        
         Label speedText = new Label("\u26A1 Speed:");
         speedText.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         speedText.setStyle("-fx-text-fill: #ecf0f1;");
@@ -428,12 +547,17 @@ public class MainApp extends Application {
         Region spacer1 = new Region();
         HBox.setHgrow(spacer1, Priority.ALWAYS);
 
+        // Feature #4: Progress bar
+        progressBar = new ProgressBar(0);
+        progressBar.setPrefWidth(100);
+        progressBar.setPrefHeight(14);
+        progressBar.setStyle("-fx-accent: #3498db;");
+
         HBox playbackBar = new HBox(10, btnBack, btnPlayPause, btnForward, btnReset,
-                spacer1, stepLabel, speedText, speedSlider, speedLabel);
+                spacer1, stepLabel, progressBar, speedText, speedSlider, speedLabel);
         playbackBar.setAlignment(Pos.CENTER);
         playbackBar.setPadding(new Insets(6, 16, 10, 16));
 
-        
         Separator sep = styledSeparator();
 
         VBox bottomPanel = new VBox(0, algoBar, sep, playbackBar);
@@ -449,11 +573,26 @@ public class MainApp extends Application {
         resetAll();
         selectedAlgorithm = name;
 
-        
         for (Button btn : algoButtons) {
             applyAlgoButtonStyle(btn, false);
         }
         applyAlgoButtonStyle(selected, true);
+
+        // Feature #6: Update algorithm info panel
+        if (algoInfoPanel != null) {
+            updateAlgoInfoPanel(name, null);
+        }
+    }
+
+    // Feature #1: Select algorithm by keyboard number
+    private void selectAlgoByIndex(int index) {
+        if (index >= 0 && index < algoButtons.size()) {
+            Button btn = algoButtons.get(index);
+            if (!btn.isDisabled()) {
+                String[] algoNames = {"BFS", "DFS", "Dijkstra", "Kruskal", "Prim's", "Bellman-Ford", "Floyd-Warshall", "Topo Sort", "TSP"};
+                selectAlgorithm(algoNames[index], btn);
+            }
+        }
     }
 
     private void runSelectedAlgorithm() {
@@ -465,22 +604,22 @@ public class MainApp extends Application {
 
         switch (selectedAlgorithm) {
             case "BFS":
-                steps = BFS.run(graph, 0);
+                steps = BFS.run(graph, sourceNode);
                 break;
             case "DFS":
-                steps = DFS.run(graph, 0);
+                steps = DFS.run(graph, sourceNode);
                 break;
             case "Dijkstra":
-                steps = Dijkstra.run(graph, 0);
+                steps = Dijkstra.run(graph, sourceNode);
                 break;
             case "Kruskal":
                 steps = Kruskal.run(graph);
                 break;
             case "Prim's":
-                steps = Prims.run(graph, 0);
+                steps = Prims.run(graph, sourceNode);
                 break;
             case "Bellman-Ford":
-                steps = BellmanFord.run(graph, 0);
+                steps = BellmanFord.run(graph, sourceNode);
                 break;
             case "Floyd-Warshall":
                 steps = FloydWarshall.run(graph);
@@ -489,7 +628,7 @@ public class MainApp extends Application {
                 steps = TopologicalSort.run(graph);
                 break;
             case "TSP":
-                steps = TSP.run(graph, 0);
+                steps = TSP.run(graph, sourceNode);
                 break;
             default:
                 return;
@@ -498,7 +637,6 @@ public class MainApp extends Application {
         long endTime = System.nanoTime();
         algorithmRuntimeNanos = endTime - startTime;
 
-        
         runtimeSection.setVisible(false);
         runtimeSection.setManaged(false);
 
@@ -508,15 +646,13 @@ public class MainApp extends Application {
         btnPlayPause.setText("\u23F8 Pause");
     }
 
-    
-
     private void togglePlayPause() {
         if (animator.isPlaying()) {
             animator.pause();
             btnPlayPause.setText("\u25B6 Play");
         } else {
             if (animator.getTotalSteps() == 0 && selectedAlgorithm != null) {
-                
+
                 runSelectedAlgorithm();
             } else {
                 animator.play();
@@ -536,7 +672,12 @@ public class MainApp extends Application {
         runtimeSection.setManaged(false);
         runtimeLabel.setText("\u2014");
         algorithmRuntimeNanos = 0;
-        
+
+        // Feature #4: Reset progress bar
+        if (progressBar != null) {
+            progressBar.setProgress(0);
+        }
+
         traversalOrderSet.clear();
         traversalLabel.setText("");
         traversalBox.setVisible(false);
@@ -547,12 +688,21 @@ public class MainApp extends Application {
         int total = animator.getTotalSteps();
         stepLabel.setText("Step: " + cur + " / " + total);
 
+        // Feature #4: Update progress bar
+        if (progressBar != null && total > 0) {
+            progressBar.setProgress((double) cur / total);
+        }
+
         Step currentStep = animator.getCurrentStep();
         if (currentStep != null) {
             stepDescriptionLabel.setText(currentStep.toDescription());
+
+            // Feature #6: Update pseudocode highlighting
+            if (algoInfoPanel != null && selectedAlgorithm != null) {
+                updateAlgoInfoPanel(selectedAlgorithm, currentStep.getType());
+            }
         }
 
-        
         rebuildTraversalDisplay();
     }
 
@@ -579,7 +729,6 @@ public class MainApp extends Application {
             return;
         }
 
-        
         for (int i = 0; i <= currentIdx; i++) {
             Step s = animator.getStepAt(i);
             if (s != null && s.getType() == StepType.VISIT_NODE) {
@@ -587,7 +736,6 @@ public class MainApp extends Application {
             }
         }
 
-        
         if (!traversalOrderSet.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             boolean first = true;
@@ -609,7 +757,6 @@ public class MainApp extends Application {
     private void onAnimationComplete() {
         btnPlayPause.setText("\u25B6 Play");
 
-        
         double runtimeMs = algorithmRuntimeNanos / 1_000_000.0;
         runtimeLabel.setText("Total: " + formatRuntime(runtimeMs));
         runtimeSection.setVisible(true);
@@ -637,10 +784,6 @@ public class MainApp extends Application {
         traversalBox.setVisible(false);
     }
 
-    
-    
-    
-
     private void buildComparisonLayout(BorderPane root, HBox header) {
         leftAlgorithm = null;
         rightAlgorithm = null;
@@ -649,7 +792,6 @@ public class MainApp extends Application {
         leftComplete = false;
         rightComplete = false;
 
-        
         leftVisualData = new GraphVisualData();
         leftVisualData.buildFromGraph(graph, COMP_CANVAS_W / 2, COMP_CANVAS_H / 2, 160);
         leftCanvas = new Pane();
@@ -662,7 +804,6 @@ public class MainApp extends Application {
         leftAnimator.setOnStepChange(() -> updateCompStepDisplay("left"));
         leftAnimator.setOnComplete(() -> onCompAnimationComplete("left"));
 
-        
         rightVisualData = new GraphVisualData();
         rightVisualData.buildFromGraph(graph, COMP_CANVAS_W / 2, COMP_CANVAS_H / 2, 160);
         rightCanvas = new Pane();
@@ -675,11 +816,9 @@ public class MainApp extends Application {
         rightAnimator.setOnStepChange(() -> updateCompStepDisplay("right"));
         rightAnimator.setOnComplete(() -> onCompAnimationComplete("right"));
 
-        
         VBox leftPane = buildSidePane("left");
         VBox rightPane = buildSidePane("right");
 
-        
         Region divider = new Region();
         divider.setPrefWidth(3);
         divider.setMinWidth(3);
@@ -691,7 +830,6 @@ public class MainApp extends Application {
         HBox.setHgrow(rightPane, Priority.ALWAYS);
         splitCenter.setStyle("-fx-background-color: #2c3e50;");
 
-        
         VBox bottomPanel = buildCompBottomPanel();
 
         pranjal();
@@ -704,15 +842,12 @@ public class MainApp extends Application {
     private VBox buildSidePane(String side) {
         boolean isLeft = side.equals("left");
 
-        
         Label sideTitle = new Label(isLeft ? "\u25C0 Algorithm A" : "\u25B6 Algorithm B");
         sideTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         sideTitle.setStyle("-fx-text-fill: white;");
 
-        
         HBox algoRow = buildCompAlgoRow(side);
 
-        
         Label stepDesc = new Label("Select an algorithm.");
         stepDesc.setFont(Font.font("Arial", 11));
         stepDesc.setStyle("-fx-text-fill: #bdc3c7;");
@@ -724,7 +859,6 @@ public class MainApp extends Application {
         else
             rightStepDescLabel = stepDesc;
 
-        
         Pane sideCanvas = isLeft ? leftCanvas : rightCanvas;
         buildCompTraversalOverlay(side);
         VBox travBox = isLeft ? leftTraversalBox : rightTraversalBox;
@@ -738,7 +872,6 @@ public class MainApp extends Application {
         travBox.layoutYProperty().bind(
                 canvasContainer.heightProperty().subtract(travBox.heightProperty()).subtract(10));
 
-        
         Label stepLbl = new Label("Step: 0 / 0");
         stepLbl.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         stepLbl.setStyle("-fx-text-fill: #ecf0f1;");
@@ -807,7 +940,6 @@ public class MainApp extends Application {
         btnTopoComp.setOnAction(e -> selectCompAlgorithm(side, "Topo Sort", btnTopoComp));
         btnTSPComp.setOnAction(e -> selectCompAlgorithm(side, "TSP", btnTSPComp));
 
-        
         if (isDirectedGraph) {
             btnKruskalComp.setDisable(true);
             btnPrimsComp.setDisable(true);
@@ -918,7 +1050,7 @@ public class MainApp extends Application {
     }
 
     private VBox buildCompBottomPanel() {
-        
+
         Button btnBack = styledButton("\u23EE Prev", "#8e44ad", "#6c3483");
         btnPlayPause = styledButton("\u25B6 Play", "#27ae60", "#1e8449");
         Button btnForward = styledButton("\u23ED Next", "#8e44ad", "#6c3483");
@@ -929,7 +1061,6 @@ public class MainApp extends Application {
         btnPlayPause.setOnAction(e -> compTogglePlayPause());
         btnReset.setOnAction(e -> compResetAll());
 
-        
         Label speedText = new Label("\u26A1 Speed:");
         speedText.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         speedText.setStyle("-fx-text-fill: #ecf0f1;");
@@ -968,8 +1099,6 @@ public class MainApp extends Application {
         return bottomPanel;
     }
 
-    
-
     private void compTogglePlayPause() {
         boolean eitherPlaying = (leftAnimator != null && leftAnimator.isPlaying())
                 || (rightAnimator != null && rightAnimator.isPlaying());
@@ -981,7 +1110,7 @@ public class MainApp extends Application {
                 rightAnimator.pause();
             btnPlayPause.setText("\u25B6 Play");
         } else {
-            
+
             if (leftAnimator != null && leftAnimator.getTotalSteps() == 0 && leftAlgorithm != null) {
                 runCompAlgorithm("left");
                 leftComplete = false;
@@ -1074,8 +1203,6 @@ public class MainApp extends Application {
             rightTraversalBox.setVisible(false);
     }
 
-    
-
     private void updateCompStepDisplay(String side) {
         boolean isLeft = side.equals("left");
         StepAnimator anim = isLeft ? leftAnimator : rightAnimator;
@@ -1110,7 +1237,6 @@ public class MainApp extends Application {
             rightRuntimeLabel.setVisible(true);
         }
 
-        
         boolean leftDone = leftAlgorithm == null || leftComplete;
         boolean rightDone = rightAlgorithm == null || rightComplete;
         if (leftDone && rightDone) {
@@ -1197,10 +1323,6 @@ public class MainApp extends Application {
             travBox.setVisible(false);
         }
     }
-
-    
-    
-    
 
     private String formatRuntime(double runtimeMs) {
         pranjal();
