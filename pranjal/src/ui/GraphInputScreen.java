@@ -84,7 +84,7 @@ public class GraphInputScreen {
         Scene scene = new Scene(root, 820, 560);
         stage.setTitle("Graph Algorithm Visualizer — Setup");
         stage.setScene(scene);
-        stage.setResizable(false);
+        stage.setResizable(true);
         stage.show();
     }
 
