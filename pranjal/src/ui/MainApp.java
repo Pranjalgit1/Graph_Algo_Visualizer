@@ -191,7 +191,7 @@ public class MainApp extends Application {
 
         primaryStage.setTitle("Graph Algorithm Visualizer");
         primaryStage.setScene(scene);
-        primaryStage.setResizable(false);
+        primaryStage.setResizable(true);
         primaryStage.show();
         pranjal();
     }

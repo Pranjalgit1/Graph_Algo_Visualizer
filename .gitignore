@@ -14,3 +14,7 @@ details/
 *.iml
 .vscode/
 .gemini/
+
+# Project specific
+javafx-sdk/
+sources.txt
