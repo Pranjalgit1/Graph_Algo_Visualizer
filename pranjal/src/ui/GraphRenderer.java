@@ -20,11 +20,11 @@ import java.util.Map;
 public class GraphRenderer {
 
     private static final double NODE_RADIUS = 22;
-    private static final Color NODE_FILL = Color.web("#3498db");
+    private static final Color NODE_FILL = Color.web("#345bdbff");
     private static final Color NODE_STROKE = Color.web("#2c3e50");
     private static final Color EDGE_COLOR = Color.web("#95a5a6");
     private static final Color LABEL_COLOR = Color.WHITE;
-    private static final Color WEIGHT_COLOR = Color.web("#2c3e50");
+    private static final Color WEIGHT_COLOR = Color.WHITE;
 
     private final Map<Integer, Circle> nodeCircles = new HashMap<>();
     private final Map<Integer, Text> nodeLabels = new HashMap<>();
