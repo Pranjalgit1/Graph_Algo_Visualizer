@@ -1,6 +1,18 @@
 # Graph Algorithm Visualizer 🕸️✨
 
 A modern, highly interactive JavaFX application designed to visualize and compare fundamental graph algorithms in real-time. Built with a sleek, dark-themed SaaS-style dashboard, this tool is perfect for students, educators, and developers who want to intuitively understand how graph algorithms traverse nodes, calculate shortest paths, and construct minimum spanning trees.
+## 🖼️ Preview
+
+### 🎯 Main Interface
+<img width="1920" height="1200" alt="Screenshot (133)" src="https://github.com/user-attachments/assets/980ee5aa-20ab-4a18-8042-c162410ded6c" />
+
+
+### ⚡ Algorithm Visualization (BFS)
+<img width="1920" height="1200" alt="Screenshot (134)" src="https://github.com/user-attachments/assets/4c5665c1-59d4-4dfb-9663-a8e24d49bcea" />
+
+
+### 🔄 Compare Mode
+<img width="1920" height="1200" alt="Screenshot (135)" src="https://github.com/user-attachments/assets/5e05ba20-395a-4496-be7e-0127c7ccb683" />
 
 ## 🚀 Features
 
