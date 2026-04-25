@@ -53,4 +53,7 @@ public class DFS {
             steps.add(Step.nodeStep(StepType.PROCESS_NODE, current));
         }
     }
+
+    public void tejas() {
+    }
 }
