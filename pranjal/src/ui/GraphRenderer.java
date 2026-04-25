@@ -30,13 +30,15 @@ public class GraphRenderer {
     private final Map<Integer, Text> nodeLabels = new HashMap<>();
     private final Map<String, Line> edgeLines = new HashMap<>();
     private final Map<String, Text> edgeWeights = new HashMap<>();
+    private final Map<Integer, Circle> destinationRings = new HashMap<>();
 
     private final Pane canvas;
     private GraphVisualData currentVisualData;
 
-    // Source node selection support
     private int selectedSourceNode = 0;
     private Runnable onSourceNodeChanged;
+
+    private int destinationNode = -1;
 
     public GraphRenderer(Pane canvas) {
         this.canvas = canvas;
@@ -59,6 +61,15 @@ public class GraphRenderer {
         updateSourceHighlight();
     }
 
+    public int getDestinationNode() {
+        return destinationNode;
+    }
+
+    public void setDestinationNode(int node) {
+        this.destinationNode = node;
+        updateDestinationHighlight();
+    }
+
     public void render(GraphVisualData data) {
         this.currentVisualData = data;
         canvas.getChildren().clear();
@@ -66,18 +77,18 @@ public class GraphRenderer {
         nodeLabels.clear();
         edgeLines.clear();
         edgeWeights.clear();
+        destinationRings.clear();
 
-        // Draw edges first (behind nodes)
         for (VisualEdge ve : data.getAllEdges()) {
             drawEdge(ve, data);
         }
 
-        // Draw nodes on top
         for (VisualNode vn : data.getAllNodes().values()) {
             drawNode(vn);
         }
 
         updateSourceHighlight();
+        updateDestinationHighlight();
     }
 
     private void drawNode(VisualNode vn) {
@@ -92,12 +103,10 @@ public class GraphRenderer {
         label.setX(vn.getX() - label.getLayoutBounds().getWidth() / 2);
         label.setY(vn.getY() + label.getLayoutBounds().getHeight() / 4);
 
-        // Feature #3: Tooltip on hover
         Tooltip tooltip = new Tooltip("Node " + vn.getId());
         tooltip.setStyle("-fx-font-size: 12px;");
         Tooltip.install(circle, tooltip);
 
-        // Feature #5: Drag-and-drop repositioning
         final double[] dragStart = new double[2];
         circle.setOnMousePressed(e -> {
             dragStart[0] = e.getSceneX() - circle.getCenterX();
@@ -109,7 +118,6 @@ public class GraphRenderer {
             double newX = e.getSceneX() - dragStart[0];
             double newY = e.getSceneY() - dragStart[1];
 
-            // Clamp to canvas bounds
             newX = Math.max(NODE_RADIUS, Math.min(canvas.getPrefWidth() - NODE_RADIUS, newX));
             newY = Math.max(NODE_RADIUS, Math.min(canvas.getPrefHeight() - NODE_RADIUS, newY));
 
@@ -118,16 +126,13 @@ public class GraphRenderer {
             label.setX(newX - label.getLayoutBounds().getWidth() / 2);
             label.setY(newY + label.getLayoutBounds().getHeight() / 4);
 
-            // Update the visual data model
             vn.setX(newX);
             vn.setY(newY);
 
-            // Update all connected edges
             updateConnectedEdges(vn.getId());
             e.consume();
         });
 
-        // Feature #2: Click to select as source node
         circle.setOnMouseClicked(e -> {
             if (e.getClickCount() == 1 && !e.isConsumed()) {
                 selectedSourceNode = vn.getId();
@@ -179,7 +184,6 @@ public class GraphRenderer {
             wt.setFont(Font.font("Arial", FontWeight.BOLD, 13));
             wt.setFill(WEIGHT_COLOR);
 
-            // Feature #10: Double-click to edit edge weight
             wt.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2) {
                     startEdgeWeightEdit(wt, ve);
@@ -192,15 +196,16 @@ public class GraphRenderer {
         }
     }
 
-    // Feature #5: Update all edge lines connected to a moved node
     private void updateConnectedEdges(int nodeId) {
-        if (currentVisualData == null) return;
+        if (currentVisualData == null)
+            return;
 
         for (VisualEdge ve : currentVisualData.getAllEdges()) {
             if (ve.getU() == nodeId || ve.getV() == nodeId) {
                 VisualNode from = currentVisualData.getNode(ve.getU());
                 VisualNode to = currentVisualData.getNode(ve.getV());
-                if (from == null || to == null) continue;
+                if (from == null || to == null)
+                    continue;
 
                 String key = edgeKey(ve.getU(), ve.getV());
                 Line line = edgeLines.get(key);
@@ -211,7 +216,6 @@ public class GraphRenderer {
                     line.setEndY(to.getY());
                 }
 
-                // Also reposition weight label
                 Text wt = edgeWeights.get(key);
                 if (wt != null) {
                     final double LABEL_T = 0.30;
@@ -235,17 +239,15 @@ public class GraphRenderer {
         }
     }
 
-    // Feature #10: Inline edge weight editing
     private void startEdgeWeightEdit(Text weightText, VisualEdge ve) {
         TextField editField = new TextField(String.valueOf(ve.getWeight()));
         editField.setPrefWidth(45);
         editField.setPrefHeight(22);
         editField.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         editField.setStyle(
-            "-fx-background-color: white; -fx-text-fill: #2c3e50; " +
-            "-fx-border-color: #3498db; -fx-border-width: 2; -fx-border-radius: 3; " +
-            "-fx-background-radius: 3; -fx-padding: 1 3;"
-        );
+                "-fx-background-color: white; -fx-text-fill: #2c3e50; " +
+                        "-fx-border-color: #3498db; -fx-border-width: 2; -fx-border-radius: 3; " +
+                        "-fx-background-radius: 3; -fx-padding: 1 3;");
         editField.setLayoutX(weightText.getX() - 10);
         editField.setLayoutY(weightText.getY() - 18);
 
@@ -275,12 +277,11 @@ public class GraphRenderer {
         });
     }
 
-    // Feature #2: Highlight the selected source node with a distinct ring
     private void updateSourceHighlight() {
         for (Map.Entry<Integer, Circle> entry : nodeCircles.entrySet()) {
             Circle c = entry.getValue();
             if (c.getFill().equals(NODE_FILL)) {
-                // Only reset stroke for nodes still in default color
+
                 if (entry.getKey() == selectedSourceNode) {
                     c.setStroke(Color.web("#e74c3c"));
                     c.setStrokeWidth(4);
@@ -290,6 +291,38 @@ public class GraphRenderer {
                 }
             }
         }
+    }
+
+    private void updateDestinationHighlight() {
+
+        for (Circle ring : destinationRings.values()) {
+            canvas.getChildren().remove(ring);
+        }
+        destinationRings.clear();
+
+        if (destinationNode < 0)
+            return;
+
+        Circle base = nodeCircles.get(destinationNode);
+        if (base == null)
+            return;
+
+        Circle ring = new Circle(base.getCenterX(), base.getCenterY(), NODE_RADIUS + 7);
+        ring.setFill(Color.TRANSPARENT);
+        ring.setStroke(Color.web("#2ecc71"));
+        ring.setStrokeWidth(3.5);
+        ring.setMouseTransparent(true);
+
+        ring.centerXProperty().bind(base.centerXProperty());
+        ring.centerYProperty().bind(base.centerYProperty());
+
+        destinationRings.put(destinationNode, ring);
+        canvas.getChildren().add(ring);
+        ring.toFront();
+
+        Text lbl = nodeLabels.get(destinationNode);
+        if (lbl != null)
+            lbl.toFront();
     }
 
     public Circle getNodeCircle(int id) {

@@ -47,157 +47,248 @@ public class GraphInputScreen {
     }
 
     public void show() {
-        
-        Label title = new Label("Graph Algorithm Visualizer");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 26));
+
+        Label title = new Label("\u2728 Graph Algorithm Visualizer \u2728");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         title.setStyle("-fx-text-fill: white;");
 
-        Label subtitle = new Label("Configure Your Graph");
-        subtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        subtitle.setStyle("-fx-text-fill: #bdc3c7;");
+        Label subtitle = new Label("Configure your graph and start visualizing algorithms");
+        subtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
+        subtitle.setStyle("-fx-text-fill: #8e9aaf;");
 
         VBox headerContent = new VBox(4, title, subtitle);
         headerContent.setAlignment(Pos.CENTER);
-        headerContent.setPadding(new Insets(18, 0, 18, 0));
-        headerContent.setStyle("-fx-background-color: #34495e;");
+        headerContent.setPadding(new Insets(20, 0, 16, 0));
+        headerContent.setStyle("-fx-background-color: linear-gradient(to right, #0f1923, #141e2b, #0f1923);");
 
-        
         VBox configPanel = buildConfigPanel();
-
-        
         VBox edgePanel = buildEdgePanel();
 
-        
         HBox mainContent = new HBox(20, configPanel, edgePanel);
-        mainContent.setPadding(new Insets(20));
-        mainContent.setStyle("-fx-background-color: #2c3e50;");
+        mainContent.setPadding(new Insets(16, 20, 10, 20));
+        mainContent.setStyle("-fx-background-color: #0f1923;");
         HBox.setHgrow(edgePanel, Priority.ALWAYS);
 
-        
         HBox bottomPanel = buildBottomPanel();
 
-        
-        VBox root = new VBox(0, headerContent, mainContent, bottomPanel);
-        VBox.setVgrow(mainContent, Priority.ALWAYS);
-        root.setStyle("-fx-background-color: #2c3e50;");
+        // Feature badges at the very bottom
+        HBox badges = buildFeatureBadges();
 
-        Scene scene = new Scene(root, 820, 560);
-        stage.setTitle("Graph Algorithm Visualizer — Setup");
+        VBox root = new VBox(0, headerContent, mainContent, bottomPanel, badges);
+        VBox.setVgrow(mainContent, Priority.ALWAYS);
+        root.setStyle("-fx-background-color: #0f1923;");
+
+        Scene scene = new Scene(root, 960, 640);
+        stage.setTitle("Graph Algorithm Visualizer \u2014 Setup");
         stage.setScene(scene);
-        stage.setResizable(false);
+        stage.setResizable(true);
+        stage.setMaximized(true);
         stage.show();
+    }
+
+    private HBox buildFeatureBadges() {
+        HBox badges = new HBox(30,
+            badgeLabel("\u26A1 Fast & Interactive"),
+            badgeLabel("\uD83C\uDFA8 Beautiful Visuals"),
+            badgeLabel("\uD83E\uDDE0 Multiple Algorithms"),
+            badgeLabel("\uD83D\uDCE6 Export & Import")
+        );
+        badges.setAlignment(Pos.CENTER);
+        badges.setPadding(new Insets(8, 0, 10, 0));
+        badges.setStyle("-fx-background-color: #0a1018;");
+        return badges;
+    }
+
+    private Label badgeLabel(String text) {
+        Label lbl = new Label(text);
+        lbl.setFont(Font.font("Arial", 11));
+        lbl.setStyle("-fx-text-fill: #555e6b;");
+        return lbl;
     }
 
     
 
     private VBox buildConfigPanel() {
-        VBox panel = new VBox(14);
-        panel.setPadding(new Insets(16));
-        panel.setPrefWidth(240);
-        panel.setStyle("-fx-background-color: #34495e; -fx-background-radius: 10;");
+        VBox panel = new VBox(12);
+        panel.setPadding(new Insets(18));
+        panel.setPrefWidth(280);
+        panel.setStyle("-fx-background-color: #141e2b; -fx-background-radius: 12; "
+                + "-fx-border-color: #2a3a4e; -fx-border-radius: 12; -fx-border-width: 1;");
 
-        
-        Label heading = sectionHeading("Graph Settings");
+        // Section heading with icon
+        Label icon = new Label("\u2699");
+        icon.setFont(Font.font("Arial", 22));
+        icon.setStyle("-fx-text-fill: #8e9aaf;");
+        Label heading = new Label("Graph Settings");
+        heading.setFont(Font.font("Arial", FontWeight.BOLD, 17));
+        heading.setStyle("-fx-text-fill: white;");
+        Label headingSub = new Label("Define the basic properties");
+        headingSub.setFont(Font.font("Arial", 11));
+        headingSub.setStyle("-fx-text-fill: #555e6b;");
+        VBox headTexts = new VBox(0, heading, headingSub);
+        HBox headRow = new HBox(10, icon, headTexts);
+        headRow.setAlignment(Pos.CENTER_LEFT);
 
-        
-        Label nodeLabel = fieldLabel("Number of Nodes (1–20):");
+        // Number of Nodes
+        Label nodeLabel = new Label("Number of Nodes \u24D8");
+        nodeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        nodeLabel.setStyle("-fx-text-fill: #bdc3c7;");
         nodeCountField = styledTextField("e.g. 6");
         pranjal();
-        nodeCountField.setPrefWidth(180);
+        nodeCountField.setPrefWidth(240);
+
+        Label rangeHint = new Label("Range: 1 to 50");
+        rangeHint.setFont(Font.font("Arial", 10));
+        rangeHint.setStyle("-fx-text-fill: #555e6b;");
 
         nodeInfoLabel = new Label("");
         nodeInfoLabel.setFont(Font.font("Arial", 11));
         nodeInfoLabel.setStyle("-fx-text-fill: #2ecc71;");
         nodeInfoLabel.setWrapText(true);
-        nodeInfoLabel.setMaxWidth(210);
+        nodeInfoLabel.setMaxWidth(240);
 
-        
         nodeCountField.textProperty().addListener((obs, oldVal, newVal) -> {
             updateNodeInfoLabel(newVal);
         });
 
-        
-        Separator sep = styledSeparator();
+        // Graph Type — card selectors
+        Label typeLabel = new Label("Graph Type");
+        typeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        typeLabel.setStyle("-fx-text-fill: #bdc3c7;");
 
-        
-        Label typeLabel = fieldLabel("Graph Type:");
         ToggleGroup typeGroup = new ToggleGroup();
-
         undirectedRadio = new RadioButton("Undirected");
         undirectedRadio.setToggleGroup(typeGroup);
         undirectedRadio.setSelected(true);
-        undirectedRadio.setFont(Font.font("Arial", 12));
-        undirectedRadio.setStyle("-fx-text-fill: #ecf0f1;");
-
+        undirectedRadio.setVisible(false);
+        undirectedRadio.setManaged(false);
         directedRadio = new RadioButton("Directed");
         directedRadio.setToggleGroup(typeGroup);
-        directedRadio.setFont(Font.font("Arial", 12));
-        directedRadio.setStyle("-fx-text-fill: #ecf0f1;");
+        directedRadio.setVisible(false);
+        directedRadio.setManaged(false);
 
-        VBox radioBox = new VBox(8, undirectedRadio, directedRadio);
-        radioBox.setPadding(new Insets(4, 0, 0, 8));
+        VBox undirCard = graphTypeCard("\u2194", "Undirected", "Edges work\nboth ways", true);
+        VBox dirCard = graphTypeCard("\u2192", "Directed", "Edges have\none direction", false);
 
-        
-        Label tip = new Label("\uD83D\uDCA1 Tip: Kruskal & Prim's are\ndisabled for directed graphs.");
-        tip.setFont(Font.font("Arial", 10));
-        tip.setStyle("-fx-text-fill: #7f8c8d;");
-        tip.setWrapText(true);
-        tip.setMaxWidth(210);
-        tip.setPadding(new Insets(8, 0, 0, 0));
+        undirCard.setOnMouseClicked(e -> {
+            undirectedRadio.setSelected(true);
+            styleTypeCard(undirCard, true);
+            styleTypeCard(dirCard, false);
+        });
+        dirCard.setOnMouseClicked(e -> {
+            directedRadio.setSelected(true);
+            styleTypeCard(dirCard, true);
+            styleTypeCard(undirCard, false);
+        });
 
-        panel.getChildren().addAll(heading, nodeLabel, nodeCountField, nodeInfoLabel,
-                sep, typeLabel, radioBox, tip);
+        HBox typeCards = new HBox(12, undirCard, dirCard);
+        typeCards.setAlignment(Pos.CENTER_LEFT);
+
+        // Tip box
+        VBox tipBox = new VBox(4);
+        tipBox.setPadding(new Insets(10));
+        tipBox.setStyle("-fx-background-color: rgba(142,68,173,0.1); -fx-background-radius: 8; "
+                + "-fx-border-color: #8e44ad; -fx-border-radius: 8; -fx-border-width: 1; -fx-border-style: dashed;");
+        Label tipIcon = new Label("\uD83D\uDCA1 Tip");
+        tipIcon.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        tipIcon.setStyle("-fx-text-fill: #8e44ad;");
+        Label tipText = new Label("Kruskal's and Prim's algorithms\nare disabled for directed graphs.");
+        tipText.setFont(Font.font("Arial", 11));
+        tipText.setStyle("-fx-text-fill: #8e9aaf;");
+        tipText.setWrapText(true);
+        tipBox.getChildren().addAll(tipIcon, tipText);
+
+        panel.getChildren().addAll(headRow, nodeLabel, nodeCountField, rangeHint, nodeInfoLabel,
+                typeLabel, typeCards, tipBox);
         return panel;
+    }
+
+    private VBox graphTypeCard(String iconText, String title, String desc, boolean selected) {
+        Label iconLbl = new Label(iconText);
+        iconLbl.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        iconLbl.setStyle("-fx-text-fill: #8e44ad;");
+        Label titleLbl = new Label(title);
+        titleLbl.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        titleLbl.setStyle("-fx-text-fill: white;");
+        Label descLbl = new Label(desc);
+        descLbl.setFont(Font.font("Arial", 10));
+        descLbl.setStyle("-fx-text-fill: #8e9aaf;");
+        VBox card = new VBox(4, iconLbl, titleLbl, descLbl);
+        card.setAlignment(Pos.CENTER);
+        card.setPadding(new Insets(12, 16, 12, 16));
+        card.setPrefWidth(120);
+        card.setCursor(javafx.scene.Cursor.HAND);
+        styleTypeCard(card, selected);
+        return card;
+    }
+
+    private void styleTypeCard(VBox card, boolean selected) {
+        if (selected) {
+            card.setStyle("-fx-background-color: rgba(142,68,173,0.15); -fx-background-radius: 10; "
+                    + "-fx-border-color: #8e44ad; -fx-border-radius: 10; -fx-border-width: 2;");
+        } else {
+            card.setStyle("-fx-background-color: #1a2332; -fx-background-radius: 10; "
+                    + "-fx-border-color: #2a3a4e; -fx-border-radius: 10; -fx-border-width: 1;");
+        }
     }
 
     
 
     private VBox buildEdgePanel() {
         VBox panel = new VBox(12);
-        panel.setPadding(new Insets(16));
-        panel.setStyle("-fx-background-color: #34495e; -fx-background-radius: 10;");
+        panel.setPadding(new Insets(18));
+        panel.setStyle("-fx-background-color: #141e2b; -fx-background-radius: 12; "
+                + "-fx-border-color: #2a3a4e; -fx-border-radius: 12; -fx-border-width: 1;");
 
-        Label heading = sectionHeading("Define Edges");
+        // Section heading with icon
+        Label icon = new Label("\uD83D\uDD17");
+        icon.setFont(Font.font("Arial", 20));
+        Label heading = new Label("Define Edges");
+        heading.setFont(Font.font("Arial", FontWeight.BOLD, 17));
+        heading.setStyle("-fx-text-fill: white;");
+        Label headingSub = new Label("Add edges between nodes with weights");
+        headingSub.setFont(Font.font("Arial", 11));
+        headingSub.setStyle("-fx-text-fill: #555e6b;");
+        VBox headTexts = new VBox(0, heading, headingSub);
+        HBox headRow = new HBox(10, icon, headTexts);
+        headRow.setAlignment(Pos.CENTER_LEFT);
 
-        
+        // Input row
         Label fromLabel = fieldLabel("From:");
         fromField = styledTextField("0");
-        fromField.setPrefWidth(60);
-
+        fromField.setPrefWidth(70);
+        Label arrow1 = new Label("\u2192");
+        arrow1.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        arrow1.setStyle("-fx-text-fill: #8e9aaf;");
         Label toLabel = fieldLabel("To:");
         toField = styledTextField("1");
-        toField.setPrefWidth(60);
-
+        toField.setPrefWidth(70);
         Label weightLabel = fieldLabel("Weight:");
         weightField = styledTextField("1");
-        weightField.setPrefWidth(70);
+        weightField.setPrefWidth(80);
 
         Button addBtn = accentButton("+ Add Edge", "#27ae60", "#1e8449");
         addBtn.setOnAction(e -> addEdge());
 
-        HBox inputRow = new HBox(8, fromLabel, fromField, toLabel, toField,
+        HBox inputRow = new HBox(8, fromLabel, fromField, arrow1, toLabel, toField,
                 weightLabel, weightField, addBtn);
         inputRow.setAlignment(Pos.CENTER_LEFT);
 
-        
         errorLabel = new Label("");
         errorLabel.setFont(Font.font("Arial", 11));
         errorLabel.setStyle("-fx-text-fill: #e74c3c;");
         errorLabel.setWrapText(true);
-        errorLabel.setMaxWidth(480);
+        errorLabel.setMaxWidth(560);
 
-        
         edgeData = FXCollections.observableArrayList();
         edgeTable = buildEdgeTable();
 
-        
         Button removeBtn = accentButton("\uD83D\uDDD1 Remove Selected", "#c0392b", "#96281b");
         removeBtn.setOnAction(e -> removeSelectedEdge());
-
         HBox tableControls = new HBox(10, removeBtn);
         tableControls.setAlignment(Pos.CENTER_LEFT);
 
-        panel.getChildren().addAll(heading, inputRow, errorLabel, edgeTable, tableControls);
+        panel.getChildren().addAll(headRow, inputRow, errorLabel, edgeTable, tableControls);
         VBox.setVgrow(edgeTable, Priority.ALWAYS);
         pranjal();
         return panel;
@@ -206,82 +297,105 @@ public class GraphInputScreen {
     @SuppressWarnings("unchecked")
     private TableView<EdgeEntry> buildEdgeTable() {
         TableView<EdgeEntry> table = new TableView<>(edgeData);
-        table.setPlaceholder(new Label("No edges added yet."));
-        table.setPrefHeight(250);
+        Label placeholder = new Label("No edges added yet.");
+        placeholder.setStyle("-fx-text-fill: #555e6b;");
+        table.setPlaceholder(placeholder);
+        table.setPrefHeight(260);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<EdgeEntry, Integer> fromCol = new TableColumn<>("From");
         fromCol.setCellValueFactory(new PropertyValueFactory<>("from"));
-        fromCol.setPrefWidth(80);
+        fromCol.setPrefWidth(100);
         fromCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<EdgeEntry, Integer> toCol = new TableColumn<>("To");
         toCol.setCellValueFactory(new PropertyValueFactory<>("to"));
-        toCol.setPrefWidth(80);
+        toCol.setPrefWidth(100);
         toCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<EdgeEntry, Integer> weightCol = new TableColumn<>("Weight");
         weightCol.setCellValueFactory(new PropertyValueFactory<>("weight"));
-        weightCol.setPrefWidth(80);
+        weightCol.setPrefWidth(100);
         weightCol.setStyle("-fx-alignment: CENTER;");
 
         table.getColumns().addAll(fromCol, toCol, weightCol);
 
-        
         table.setStyle(
-                "-fx-background-color: #2c3e50; " +
-                        "-fx-control-inner-background: #2c3e50; " +
-                        "-fx-control-inner-background-alt: #34495e; " +
-                        "-fx-table-cell-border-color: #3d566e; " +
-                        "-fx-text-fill: #ecf0f1;");
+                "-fx-background-color: #0f1923; "
+                + "-fx-control-inner-background: #0f1923; "
+                + "-fx-control-inner-background-alt: #141e2b; "
+                + "-fx-table-cell-border-color: #2a3a4e; "
+                + "-fx-text-fill: #ecf0f1; "
+                + "-fx-background-radius: 8; "
+                + "-fx-border-color: #2a3a4e; -fx-border-radius: 8;");
 
         return table;
     }
 
-    
-
     private HBox buildBottomPanel() {
-        javafx.scene.control.MenuButton sampleMenu = new javafx.scene.control.MenuButton("\uD83D\uDCE5 Load Sample");
+        javafx.scene.control.MenuButton sampleMenu = new javafx.scene.control.MenuButton("\uD83D\uDCC2 Load Sample \u25BE");
         sampleMenu.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         String menuBase = "-fx-background-color: #8e44ad; -fx-text-fill: white; "
-                + "-fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;";
+                + "-fx-padding: 10 20; -fx-background-radius: 20; -fx-cursor: hand;";
+        String menuHover = "-fx-background-color: #6c3483; -fx-text-fill: white; "
+                + "-fx-padding: 10 20; -fx-background-radius: 20; -fx-cursor: hand; "
+                + "-fx-effect: dropshadow(gaussian, #8e44ad, 8, 0.3, 0, 0);";
         sampleMenu.setStyle(menuBase);
+        sampleMenu.setOnMouseEntered(e -> sampleMenu.setStyle(menuHover));
+        sampleMenu.setOnMouseExited(e -> sampleMenu.setStyle(menuBase));
 
-        javafx.scene.control.MenuItem simple = new javafx.scene.control.MenuItem("Simple (6 nodes) — General purpose");
+        javafx.scene.control.MenuItem simple = new javafx.scene.control.MenuItem("Simple (6 nodes) \u2014 General purpose");
         simple.setOnAction(e -> loadSampleSimple());
-
-        javafx.scene.control.MenuItem tree = new javafx.scene.control.MenuItem("Small Tree (4 nodes) — BFS / DFS");
+        javafx.scene.control.MenuItem tree = new javafx.scene.control.MenuItem("Small Tree (4 nodes) \u2014 BFS / DFS");
         tree.setOnAction(e -> loadSampleTree());
-
-        javafx.scene.control.MenuItem complete = new javafx.scene.control.MenuItem("Complete K5 (5 nodes) — Kruskal / Prim's / TSP");
+        javafx.scene.control.MenuItem complete = new javafx.scene.control.MenuItem("Complete K5 (5 nodes) \u2014 Kruskal / Prim's / TSP");
         complete.setOnAction(e -> loadSampleComplete());
-
-        javafx.scene.control.MenuItem negEdges = new javafx.scene.control.MenuItem("Negative Edges (5 nodes) — Bellman-Ford");
+        javafx.scene.control.MenuItem negEdges = new javafx.scene.control.MenuItem("Negative Edges (5 nodes) \u2014 Bellman-Ford");
         negEdges.setOnAction(e -> loadSampleNegative());
-
-        javafx.scene.control.MenuItem dag = new javafx.scene.control.MenuItem("DAG (6 nodes) — Topological Sort");
+        javafx.scene.control.MenuItem dag = new javafx.scene.control.MenuItem("DAG (6 nodes) \u2014 Topological Sort");
         dag.setOnAction(e -> loadSampleDAG());
-
-        javafx.scene.control.MenuItem disconnected = new javafx.scene.control.MenuItem("Disconnected (6 nodes) — Edge cases");
+        javafx.scene.control.MenuItem disconnected = new javafx.scene.control.MenuItem("Disconnected (6 nodes) \u2014 Edge cases");
         disconnected.setOnAction(e -> loadSampleDisconnected());
+        javafx.scene.control.MenuItem largeGraph = new javafx.scene.control.MenuItem("Large Graph (15 nodes) \u2014 Stress test");
+        largeGraph.setOnAction(e -> loadSampleLargeGraph());
+        sampleMenu.getItems().addAll(simple, tree, complete, negEdges, dag, disconnected, largeGraph);
 
-        sampleMenu.getItems().addAll(simple, tree, complete, negEdges, dag, disconnected);
+        Button clearAllBtn = accentButton("\uD83D\uDDD1 Clear All", "#555e6b", "#7f8c8d");
 
-        Button clearAllBtn = accentButton("\uD83D\uDDD1 Clear All", "#7f8c8d", "#636e72");
         clearAllBtn.setOnAction(e -> clearAll());
+
+        // Status indicator
+        Label statusIcon = new Label("\u2728");
+        statusIcon.setFont(Font.font("Arial", 16));
+        Label statusTitle = new Label("Ready to visualize!");
+        statusTitle.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        statusTitle.setStyle("-fx-text-fill: #2ecc71;");
+        Label statusDesc = new Label("Add edges and click Visualize\nto see your graph in action.");
+        statusDesc.setFont(Font.font("Arial", 11));
+        statusDesc.setStyle("-fx-text-fill: #8e9aaf;");
+        VBox statusTexts = new VBox(0, statusTitle, statusDesc);
+        HBox statusBox = new HBox(8, statusIcon, statusTexts);
+        statusBox.setAlignment(Pos.CENTER);
+        statusBox.setPadding(new Insets(8, 20, 8, 20));
+        statusBox.setStyle("-fx-background-color: rgba(46,204,113,0.08); -fx-background-radius: 10; "
+                + "-fx-border-color: #2ecc71; -fx-border-radius: 10; -fx-border-width: 1; -fx-border-style: dashed;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button visualizeBtn = accentButton("Visualize  \u279C", "#3498db", "#2980b9");
+        Button visualizeBtn = accentButton("\uD83D\uDE80 Visualize Graph \u2192", "#3498db", "#2980b9");
         visualizeBtn.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-        visualizeBtn.setPadding(new Insets(10, 28, 10, 28));
+        visualizeBtn.setPadding(new Insets(12, 32, 12, 32));
         visualizeBtn.setOnAction(e -> visualize());
 
-        HBox bottom = new HBox(12, sampleMenu, clearAllBtn, spacer, visualizeBtn);
+        Region spacer2 = new Region();
+        HBox.setHgrow(spacer2, Priority.ALWAYS);
+
+        HBox bottom = new HBox(14, sampleMenu, clearAllBtn, spacer, statusBox, spacer2, visualizeBtn);
         bottom.setAlignment(Pos.CENTER);
-        bottom.setPadding(new Insets(12, 20, 16, 20));
-        bottom.setStyle("-fx-background-color: #34495e;");
+        bottom.setPadding(new Insets(12, 20, 14, 20));
+        bottom.setStyle("-fx-background-color: linear-gradient(to right, #0f1923, #141e2b, #0f1923); "
+                + "-fx-border-color: #2a3a4e; -fx-border-width: 1 0 0 0;");
 
         return bottom;
     }
@@ -438,6 +552,28 @@ public class GraphInputScreen {
         errorLabel.setText("");
     }
 
+    private void loadSampleLargeGraph() {
+        nodeCountField.setText("15");
+        directedRadio.setSelected(false);
+        undirectedRadio.setSelected(true);
+        edgeData.clear();
+        // 15-node graph: backbone chain + selective cross-links for good coverage
+        int[][] edges = {
+            // Backbone chain (0 → 14)
+            {0,1,4},{1,2,7},{2,3,3},{3,4,6},{4,5,9},{5,6,2},{6,7,8},
+            {7,8,5},{8,9,11},{9,10,3},{10,11,7},{11,12,4},{12,13,6},{13,14,5},
+            // Cross-links for interesting shortest paths
+            {0,4,12},{0,7,18},{1,5,10},{2,8,14},{3,9,8},
+            {4,10,15},{5,11,6},{6,12,9},{7,13,11},{8,14,7},
+            // A few long-range shortcuts
+            {0,14,25},{1,10,16},{3,12,13},{5,13,10}
+        };
+        for (int[] e : edges) {
+            edgeData.add(new EdgeEntry(e[0], e[1], e[2]));
+        }
+        errorLabel.setText("");
+    }
+
     private void loadSampleDisconnected() {
         nodeCountField.setText("6");
         directedRadio.setSelected(false);
@@ -500,8 +636,8 @@ public class GraphInputScreen {
         try {
             int count = Integer.parseInt(text);
             pranjal();
-            if (count < 1 || count > 20) {
-                errorLabel.setText("Node count must be between 1 and 20.");
+            if (count < 1 || count > 50) {
+                errorLabel.setText("Node count must be between 1 and 50.");
                 return -1;
             }
             return count;
@@ -518,11 +654,11 @@ public class GraphInputScreen {
         }
         try {
             int count = Integer.parseInt(text.trim());
-            if (count >= 1 && count <= 20) {
+            if (count >= 1 && count <= 50) {
                 nodeInfoLabel.setText("Nodes: 0 to " + (count - 1));
                 nodeInfoLabel.setStyle("-fx-text-fill: #2ecc71;");
             } else {
-                nodeInfoLabel.setText("Must be 1–20");
+                nodeInfoLabel.setText("Must be 1–50");
                 nodeInfoLabel.setStyle("-fx-text-fill: #e74c3c;");
             }
         } catch (NumberFormatException e) {
@@ -552,28 +688,39 @@ public class GraphInputScreen {
         TextField tf = new TextField();
         tf.setPromptText(prompt);
         tf.setFont(Font.font("Arial", 13));
-        tf.setStyle(
-                "-fx-background-color: #2c3e50; " +
-                        "-fx-text-fill: #ecf0f1; " +
-                        "-fx-prompt-text-fill: #7f8c8d; " +
-                        "-fx-border-color: #3d566e; " +
-                        "-fx-border-radius: 5; " +
-                        "-fx-background-radius: 5; " +
-                        "-fx-padding: 6 10;");
+        String base = "-fx-background-color: #1a2332; "
+                + "-fx-text-fill: #ecf0f1; "
+                + "-fx-prompt-text-fill: #555e6b; "
+                + "-fx-border-color: #2a3a4e; "
+                + "-fx-border-radius: 8; "
+                + "-fx-background-radius: 8; "
+                + "-fx-padding: 8 12;";
+        String focus = "-fx-background-color: #1a2332; "
+                + "-fx-text-fill: #ecf0f1; "
+                + "-fx-prompt-text-fill: #555e6b; "
+                + "-fx-border-color: #3498db; "
+                + "-fx-border-radius: 8; "
+                + "-fx-background-radius: 8; "
+                + "-fx-padding: 8 12;";
+        tf.setStyle(base);
+        tf.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            tf.setStyle(isFocused ? focus : base);
+        });
         return tf;
     }
 
     private Separator styledSeparator() {
         Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #3d566e; -fx-padding: 0;");
+        sep.setStyle("-fx-background-color: #2a3a4e; -fx-padding: 0;");
         return sep;
     }
 
     private Button accentButton(String text, String bg, String hoverBg) {
         String base = "-fx-background-color: " + bg + "; -fx-text-fill: white; "
-                + "-fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;";
+                + "-fx-padding: 10 20; -fx-background-radius: 20; -fx-cursor: hand;";
         String hover = "-fx-background-color: " + hoverBg + "; -fx-text-fill: white; "
-                + "-fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;";
+                + "-fx-padding: 10 20; -fx-background-radius: 20; -fx-cursor: hand; "
+                + "-fx-effect: dropshadow(gaussian, " + hoverBg + ", 8, 0.3, 0, 0);";
         Button btn = new Button(text);
         btn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         btn.setStyle(base);

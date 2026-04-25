@@ -70,6 +70,8 @@ public class Step {
                 return "Tour edge: " + fromNode + " \u2192 " + toNode;
             case TOPO_PUSH_STACK:
                 return "Pushed node " + node + " to topological order";
+            case REACH_DESTINATION:
+                return "\uD83C\uDFC1 Destination node " + node + " reached!";
             default:
                 return type.toString();
         }
@@ -94,6 +96,7 @@ public class Step {
             case NEGATIVE_CYCLE:
             case UPDATE_CELL:
             case TOPO_PUSH_STACK:
+            case REACH_DESTINATION:
                 return type + "(node=" + node + ")";
             default:
                 return type + "(node=" + node

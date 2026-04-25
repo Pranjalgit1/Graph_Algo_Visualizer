@@ -1,16 +1,19 @@
-# Docs and other files at root
-*.pdf
-*.docx
-details/
+# Ignore everything in the root
+/*
 
-# Compiled Java
+# Except .gitignore
+!/.gitignore
+
+# Except the pranjal directory
+!/pranjal/
+
+# Inside pranjal, ignore everything
+/pranjal/*
+
+# Except the src directory
+!/pranjal/src/
+
+# But ignore compiled class files and output directories anywhere
 *.class
-/out/
-/bin/
-/build/
-
-# IDE files
-.idea/
-*.iml
-.vscode/
-.gemini/
+out/
+build/

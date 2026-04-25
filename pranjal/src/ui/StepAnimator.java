@@ -300,6 +300,16 @@ public class StepAnimator {
                     c.setFill(Color.web("#1a237e")); 
                 break;
             }
+
+            case REACH_DESTINATION: {
+                Circle c = renderer.getNodeCircle(step.getNode());
+                if (c != null) {
+                    c.setFill(Color.web("#FFD700"));   // gold fill
+                    c.setStroke(Color.web("#FF8C00")); // dark orange ring
+                    c.setStrokeWidth(5);
+                }
+                break;
+            }
         }
     }
 

@@ -28,5 +28,8 @@ public enum StepType {
 
     TSP_TOUR_EDGE,
 
-    TOPO_PUSH_STACK
+    TOPO_PUSH_STACK,
+
+    /** Emitted as the final step when the destination node is reached. */
+    REACH_DESTINATION
 }
