@@ -51,8 +51,8 @@ import java.util.Set;
 
 public class MainApp extends Application {
 
-    private static final double CANVAS_WIDTH = 580;
-    private static final double CANVAS_HEIGHT = 450;
+    private static final double CANVAS_WIDTH = 750;
+    private static final double CANVAS_HEIGHT = 600;
     private static final double COMP_CANVAS_W = 680;
     private static final double COMP_CANVAS_H = 480;
     private static final double BASE_STEP_DELAY = 0.6;
@@ -329,7 +329,7 @@ public class MainApp extends Application {
         this.algoButtons.clear();
         pranjal();
         visualData = new GraphVisualData();
-        visualData.buildFromGraph(graph, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 150);
+        visualData.buildFromGraph(graph, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 250);
 
         canvas = new Pane();
         canvas.setPrefSize(CANVAS_WIDTH, CANVAS_HEIGHT);
