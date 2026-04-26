@@ -8,7 +8,8 @@ A modern, highly interactive JavaFX application designed to visualize and compar
 
 
 ### ⚡ Algorithm Visualization (BFS)
-<img width="1920" height="1200" alt="Screenshot (134)" src="https://github.com/user-attachments/assets/4c5665c1-59d4-4dfb-9663-a8e24d49bcea" />
+<img width="1919" height="1199" alt="image" src="https://github.com/user-attachments/assets/7f187c46-5071-46b4-8976-15326f7aa246" />
+
 
 
 ### 🔄 Compare Mode
