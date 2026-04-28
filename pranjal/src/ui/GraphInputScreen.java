@@ -48,7 +48,7 @@ public class GraphInputScreen {
 
     public void show() {
 
-        Label title = new Label("\u2728 Graph Algorithm Visualizer \u2728");
+        Label title = new Label(" Graph Algorithm Visualizer ");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         title.setStyle("-fx-text-fill: white;");
 
@@ -88,11 +88,10 @@ public class GraphInputScreen {
 
     private HBox buildFeatureBadges() {
         HBox badges = new HBox(30,
-            badgeLabel("\u26A1 Fast & Interactive"),
-            badgeLabel("\uD83C\uDFA8 Beautiful Visuals"),
-            badgeLabel("\uD83E\uDDE0 Multiple Algorithms"),
-            badgeLabel("\uD83D\uDCE6 Export & Import")
-        );
+                badgeLabel("\u26A1 Fast & Interactive"),
+                badgeLabel("\uD83C\uDFA8 Beautiful Visuals"),
+                badgeLabel("\uD83E\uDDE0 Multiple Algorithms"),
+                badgeLabel("\uD83D\uDCE6 Export & Import"));
         badges.setAlignment(Pos.CENTER);
         badges.setPadding(new Insets(8, 0, 10, 0));
         badges.setStyle("-fx-background-color: #0a1018;");
@@ -105,8 +104,6 @@ public class GraphInputScreen {
         lbl.setStyle("-fx-text-fill: #555e6b;");
         return lbl;
     }
-
-    
 
     private VBox buildConfigPanel() {
         VBox panel = new VBox(12);
@@ -232,8 +229,6 @@ public class GraphInputScreen {
         }
     }
 
-    
-
     private VBox buildEdgePanel() {
         VBox panel = new VBox(12);
         panel.setPadding(new Insets(18));
@@ -322,18 +317,19 @@ public class GraphInputScreen {
 
         table.setStyle(
                 "-fx-background-color: #0f1923; "
-                + "-fx-control-inner-background: #0f1923; "
-                + "-fx-control-inner-background-alt: #141e2b; "
-                + "-fx-table-cell-border-color: #2a3a4e; "
-                + "-fx-text-fill: #ecf0f1; "
-                + "-fx-background-radius: 8; "
-                + "-fx-border-color: #2a3a4e; -fx-border-radius: 8;");
+                        + "-fx-control-inner-background: #0f1923; "
+                        + "-fx-control-inner-background-alt: #141e2b; "
+                        + "-fx-table-cell-border-color: #2a3a4e; "
+                        + "-fx-text-fill: #ecf0f1; "
+                        + "-fx-background-radius: 8; "
+                        + "-fx-border-color: #2a3a4e; -fx-border-radius: 8;");
 
         return table;
     }
 
     private HBox buildBottomPanel() {
-        javafx.scene.control.MenuButton sampleMenu = new javafx.scene.control.MenuButton("\uD83D\uDCC2 Load Sample \u25BE");
+        javafx.scene.control.MenuButton sampleMenu = new javafx.scene.control.MenuButton(
+                "\uD83D\uDCC2 Load Sample \u25BE");
         sampleMenu.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         String menuBase = "-fx-background-color: #8e44ad; -fx-text-fill: white; "
                 + "-fx-padding: 10 20; -fx-background-radius: 20; -fx-cursor: hand;";
@@ -344,19 +340,24 @@ public class GraphInputScreen {
         sampleMenu.setOnMouseEntered(e -> sampleMenu.setStyle(menuHover));
         sampleMenu.setOnMouseExited(e -> sampleMenu.setStyle(menuBase));
 
-        javafx.scene.control.MenuItem simple = new javafx.scene.control.MenuItem("Simple (6 nodes) \u2014 General purpose");
+        javafx.scene.control.MenuItem simple = new javafx.scene.control.MenuItem(
+                "Simple (6 nodes) \u2014 General purpose");
         simple.setOnAction(e -> loadSampleSimple());
         javafx.scene.control.MenuItem tree = new javafx.scene.control.MenuItem("Small Tree (4 nodes) \u2014 BFS / DFS");
         tree.setOnAction(e -> loadSampleTree());
-        javafx.scene.control.MenuItem complete = new javafx.scene.control.MenuItem("Complete K5 (5 nodes) \u2014 Kruskal / Prim's / TSP");
+        javafx.scene.control.MenuItem complete = new javafx.scene.control.MenuItem(
+                "Complete K5 (5 nodes) \u2014 Kruskal / Prim's / TSP");
         complete.setOnAction(e -> loadSampleComplete());
-        javafx.scene.control.MenuItem negEdges = new javafx.scene.control.MenuItem("Negative Edges (5 nodes) \u2014 Bellman-Ford");
+        javafx.scene.control.MenuItem negEdges = new javafx.scene.control.MenuItem(
+                "Negative Edges (5 nodes) \u2014 Bellman-Ford");
         negEdges.setOnAction(e -> loadSampleNegative());
         javafx.scene.control.MenuItem dag = new javafx.scene.control.MenuItem("DAG (6 nodes) \u2014 Topological Sort");
         dag.setOnAction(e -> loadSampleDAG());
-        javafx.scene.control.MenuItem disconnected = new javafx.scene.control.MenuItem("Disconnected (6 nodes) \u2014 Edge cases");
+        javafx.scene.control.MenuItem disconnected = new javafx.scene.control.MenuItem(
+                "Disconnected (6 nodes) \u2014 Edge cases");
         disconnected.setOnAction(e -> loadSampleDisconnected());
-        javafx.scene.control.MenuItem largeGraph = new javafx.scene.control.MenuItem("Large Graph (15 nodes) \u2014 Stress test");
+        javafx.scene.control.MenuItem largeGraph = new javafx.scene.control.MenuItem(
+                "Large Graph (15 nodes) \u2014 Stress test");
         largeGraph.setOnAction(e -> loadSampleLargeGraph());
         sampleMenu.getItems().addAll(simple, tree, complete, negEdges, dag, disconnected, largeGraph);
 
@@ -399,8 +400,6 @@ public class GraphInputScreen {
 
         return bottom;
     }
-
-    
 
     private void addEdge() {
         errorLabel.setText("");
@@ -447,7 +446,6 @@ public class GraphInputScreen {
             return;
         }
 
-        
         boolean isDirected = directedRadio.isSelected();
         for (EdgeEntry existing : edgeData) {
             if (isDirected) {
@@ -466,7 +464,6 @@ public class GraphInputScreen {
 
         edgeData.add(new EdgeEntry(from, to, weight));
 
-        
         fromField.clear();
         toField.clear();
         weightField.setText("1");
@@ -559,14 +556,14 @@ public class GraphInputScreen {
         edgeData.clear();
         // 15-node graph: backbone chain + selective cross-links for good coverage
         int[][] edges = {
-            // Backbone chain (0 → 14)
-            {0,1,4},{1,2,7},{2,3,3},{3,4,6},{4,5,9},{5,6,2},{6,7,8},
-            {7,8,5},{8,9,11},{9,10,3},{10,11,7},{11,12,4},{12,13,6},{13,14,5},
-            // Cross-links for interesting shortest paths
-            {0,4,12},{0,7,18},{1,5,10},{2,8,14},{3,9,8},
-            {4,10,15},{5,11,6},{6,12,9},{7,13,11},{8,14,7},
-            // A few long-range shortcuts
-            {0,14,25},{1,10,16},{3,12,13},{5,13,10}
+                // Backbone chain (0 → 14)
+                { 0, 1, 4 }, { 1, 2, 7 }, { 2, 3, 3 }, { 3, 4, 6 }, { 4, 5, 9 }, { 5, 6, 2 }, { 6, 7, 8 },
+                { 7, 8, 5 }, { 8, 9, 11 }, { 9, 10, 3 }, { 10, 11, 7 }, { 11, 12, 4 }, { 12, 13, 6 }, { 13, 14, 5 },
+                // Cross-links for interesting shortest paths
+                { 0, 4, 12 }, { 0, 7, 18 }, { 1, 5, 10 }, { 2, 8, 14 }, { 3, 9, 8 },
+                { 4, 10, 15 }, { 5, 11, 6 }, { 6, 12, 9 }, { 7, 13, 11 }, { 8, 14, 7 },
+                // A few long-range shortcuts
+                { 0, 14, 25 }, { 1, 10, 16 }, { 3, 12, 13 }, { 5, 13, 10 }
         };
         for (int[] e : edges) {
             edgeData.add(new EdgeEntry(e[0], e[1], e[2]));
@@ -612,12 +609,10 @@ public class GraphInputScreen {
         boolean isDirected = directedRadio.isSelected();
         Graph graph = new Graph(isDirected);
 
-        
         for (int i = 0; i < nodeCount; i++) {
             graph.addVertex(i);
         }
 
-        
         for (EdgeEntry entry : edgeData) {
             graph.addWeightedEdge(entry.getFrom(), entry.getTo(), entry.getWeight());
         }
@@ -666,8 +661,6 @@ public class GraphInputScreen {
             nodeInfoLabel.setStyle("-fx-text-fill: #e74c3c;");
         }
     }
-
-    
 
     private Label sectionHeading(String text) {
         Label heading = new Label(text);
@@ -728,8 +721,6 @@ public class GraphInputScreen {
         btn.setOnMouseExited(e -> btn.setStyle(base));
         return btn;
     }
-
-    
 
     public static class EdgeEntry {
         private final SimpleIntegerProperty from;
