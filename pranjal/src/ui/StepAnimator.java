@@ -19,9 +19,9 @@ public class StepAnimator {
     private static final Color COLOR_VISIT = Color.web("#e74c3c"); // red
     private static final Color COLOR_PROCESS = Color.web("#2ecc71"); // green
     private static final Color COLOR_IN_QUEUE = Color.web("#f39c12"); // orange
-    private static final Color COLOR_EXPLORE_EDGE = Color.web("#e67e22"); // dark orange
+    private static final Color COLOR_EXPLORE_EDGE = Color.web("#e67e22"); // deep orange
     private static final Color COLOR_EDGE_SELECT = Color.web("#27ae60"); // green
-    private static final Color COLOR_EDGE_REJECT = Color.web("#c0392b"); // dark red
+    private static final Color COLOR_EDGE_REJECT = Color.web("#c0392b"); // deep red
     private static final Color COLOR_EDGE_CONSIDER = Color.web("#f1c40f"); // yellow
 
     private final GraphRenderer renderer;

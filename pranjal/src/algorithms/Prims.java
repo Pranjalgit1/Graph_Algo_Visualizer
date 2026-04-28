@@ -1,14 +1,13 @@
 package algorithms;
 
 import graph.Graph;
-import step.Step;
-import step.StepType;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
+import step.Step;
+import step.StepType;
 
 public class Prims {
 
@@ -19,7 +18,7 @@ public class Prims {
 
         PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
 
-        // start node has no incoming edge
+        // parent of start node is -1
         inMST.add(start);
         steps.add(Step.nodeStep(StepType.VISIT_NODE, start));
 
@@ -44,12 +43,12 @@ public class Prims {
                 continue;
             }
 
-            // accept this edge into MST
+            // accept 
             inMST.add(v);
             steps.add(Step.edgeStep(StepType.EDGE_SELECTED, u, v));
             steps.add(Step.nodeStep(StepType.VISIT_NODE, v));
 
-            // add all edges from the newly added vertex
+            // check neighbours 
             for (int[] neighbor : graph.getNeighbors(v)) {
                 int next = neighbor[0];
                 int nextWeight = neighbor[1];
@@ -60,7 +59,7 @@ public class Prims {
                 }
             }
 
-            // check if MST is complete
+            // if mst is complete then break
             if (inMST.size() == graph.getVertices().size()) {
                 break;
             }

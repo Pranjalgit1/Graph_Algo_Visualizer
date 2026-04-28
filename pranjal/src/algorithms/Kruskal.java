@@ -1,13 +1,12 @@
 package algorithms;
 
 import graph.Graph;
-import step.Step;
-import step.StepType;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import step.Step;
+import step.StepType;
 
 public class Kruskal {
 
@@ -26,7 +25,6 @@ public class Kruskal {
             }
         }
 
-        // Sort edges by weigt
         Collections.sort(edges, Comparator.comparingInt(e -> e[2]));
 
         int maxVertex = 0;
@@ -43,11 +41,10 @@ public class Kruskal {
             int v = edge[1];
             int w = edge[2];
 
-            // Record of we are considering this edge
             steps.add(Step.edgeStep(StepType.EDGE_CONSIDERED, u, v));
 
             if (ds.union(u, v)) {
-                // No cycle — edge is part of the MST
+                // No cycle found : edge is part of mst
                 steps.add(Step.edgeStep(StepType.EDGE_SELECTED, u, v));
                 selectedCount++;
 
@@ -55,7 +52,7 @@ public class Kruskal {
                     break;
                 }
             } else {
-                // Would form a cycle we reject
+                // cycle found therefore rejected
                 steps.add(Step.edgeStep(StepType.EDGE_REJECTED, u, v));
             }
         }

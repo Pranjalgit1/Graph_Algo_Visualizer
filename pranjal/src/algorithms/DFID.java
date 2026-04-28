@@ -14,7 +14,7 @@ public class DFID {
 
     private static int dls(int cur, int goal, int l, int[] vis) {
         if (cur == goal) return cur;
-        if (l == 0) return -1; //no node to be traversed
+        if (l == 0) return -1; //if depth limit reached 
 
         vis[cur] = 1;
 

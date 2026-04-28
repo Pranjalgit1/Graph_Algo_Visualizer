@@ -22,7 +22,7 @@ public class RandomHillClimbing {
             }
         }
 
-        // BFS to calculate heuristic value
+        // BFS to calculate heuristic values
         Arrays.fill(h, -1);
         Queue<Integer> q = new LinkedList<>();
         q.add(goal);
