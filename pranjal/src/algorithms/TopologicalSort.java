@@ -1,13 +1,12 @@
 package algorithms;
 
 import graph.Graph;
-import step.Step;
-import step.StepType;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import step.Step;
+import step.StepType;
 
 public class TopologicalSort {
 
@@ -25,16 +24,16 @@ public class TopologicalSort {
         return steps;
     }
 
-    private static void dfs(Graph graph, int current,
+    private static void dfs(Graph graph, int curr,
             Set<Integer> visited, List<Step> steps) {
 
-        visited.add(current);
-        steps.add(Step.nodeStep(StepType.VISIT_NODE, current));
+        visited.add(curr);
+        steps.add(Step.nodeStep(StepType.VISIT_NODE, curr));
 
-        for (int[] neighbor : graph.getNeighbors(current)) {
+        for (int[] neighbor : graph.getNeighbors(curr)) {
             int next = neighbor[0];
 
-            steps.add(Step.edgeStep(StepType.EXPLORE_EDGE, current, next));
+            steps.add(Step.edgeStep(StepType.EXPLORE_EDGE, curr, next));
 
             if (!visited.contains(next)) {
                 dfs(graph, next, visited, steps);
@@ -42,7 +41,7 @@ public class TopologicalSort {
         }
 
         
-        steps.add(Step.nodeStep(StepType.TOPO_PUSH_STACK, current));
-        steps.add(Step.nodeStep(StepType.PROCESS_NODE, current));
+        steps.add(Step.nodeStep(StepType.TOPO_PUSH_STACK, curr));
+        steps.add(Step.nodeStep(StepType.PROCESS_NODE, curr));
     }
 }

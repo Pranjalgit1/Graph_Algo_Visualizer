@@ -1,14 +1,13 @@
 package algorithms;
 
 import graph.Graph;
-import step.Step;
-import step.StepType;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
+import step.Step;
+import step.StepType;
 
 public class Prims {
 
@@ -23,9 +22,9 @@ public class Prims {
         inMST.add(start);
         steps.add(Step.nodeStep(StepType.VISIT_NODE, start));
 
-        for (int[] neighbor : graph.getNeighbors(start)) {
-            int v = neighbor[0];
-            int w = neighbor[1];
+        for (int[] neigh : graph.getNeighbors(start)) {
+            int v = neigh[0];
+            int w = neigh[1];
             pq.add(new int[] { w, start, v });
             steps.add(Step.nodeStep(StepType.ADD_TO_QUEUE, v));
         }
@@ -50,9 +49,9 @@ public class Prims {
             steps.add(Step.nodeStep(StepType.VISIT_NODE, v));
 
             
-            for (int[] neighbor : graph.getNeighbors(v)) {
-                int next = neighbor[0];
-                int nextWeight = neighbor[1];
+            for (int[] neigh : graph.getNeighbors(v)) {
+                int next = neigh[0];
+                int nextWeight = neigh[1];
 
                 if (!inMST.contains(next)) {
                     pq.add(new int[] { nextWeight, v, next });
